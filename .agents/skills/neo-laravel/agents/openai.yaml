@@ -1,0 +1,4 @@
+interface:
+  display_name: "Neo Laravel"
+  short_description: "按项目政策实施和评审后端任务"
+  default_prompt: "Use $neo-laravel to implement this Laravel backend task under the repository policies."

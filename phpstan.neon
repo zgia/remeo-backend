@@ -1,0 +1,52 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+
+parameters:
+    # Laravel 13 基本建议 level
+    level: 6
+
+    # 扫描目录
+    paths:
+        - app
+
+    # 不扫描的目录
+    excludePaths:
+        - vendor
+        - storage
+        - bootstrap
+        - docs
+
+    # PHP 8.5 运行环境
+    phpVersion: 80500
+
+    # Laravel 应用入口
+    bootstrapFiles:
+        - bootstrap/app.php
+
+    # 容忍 Laravel 的一些动态特性
+    reportUnmatchedIgnoredErrors: false
+
+    # 忽略常见 Laravel 动态方法误报
+    ignoreErrors:
+        # 泛型未指定（Paginator / Collection / Builder / Trait）
+        - identifier: missingType.generics
+
+        # 方法参数 / 返回值未声明类型
+        - identifier: missingType.parameter
+        - identifier: missingType.return
+        - identifier: missingType.property
+        - identifier: missingType.iterableValue
+
+        # 使用泛型 trait
+        - identifier: generics.notSubtype
+        - identifier: generics.missingTypehint
+
+        # Eloquent where / scope（Laravel 动态方法）
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+        - '#Call to an undefined method Illuminate\\Database\\Query\\Builder#'
+        - '#Static call to instance method Illuminate\\Support\\Facades#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model#'
+        - '#Access to an undefined property App\\Http\\Resources\\#'
+        - '#Using nullsafe property access.*is unnecessary\. Use -> instead\.#'
+        - '#Call to an undefined method Spatie\\QueryBuilder\\QueryBuilder#'

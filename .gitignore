@@ -1,0 +1,80 @@
+# =========================
+# 开发人员自有测试文件
+# =========================
+app/Console/Commands/TestCmd.php
+
+# =========================
+# AI / Agent 相关配置
+# =========================
+.claude
+.gstack
+/storage/aimd
+
+# =========================
+# IDE / 编辑器配置
+# =========================
+/.idea
+/.vscode
+.phpactor.json
+
+# =========================
+# 环境与敏感配置
+# =========================
+.env
+.env.backup
+.env.production
+auth.json
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+/storage/**
+!/storage/**/
+!/storage/**/.gitignore
+
+# =========================
+# 依赖目录
+# =========================
+/node_modules
+/vendor
+
+# =========================
+# 构建与运行时产物
+# =========================
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+nohup.out
+
+# =========================
+# 日志与缓存
+# =========================
+/.phpunit.cache
+*.log
+.phpunit.result.cache
+
+# =========================
+# 文档/测试生成文件
+# =========================
+api-test.rest
+phpunit.local.xml
+phpstan.local.neon
+
+# =========================
+# 本地开发工具配置
+# =========================
+Homestead.json
+Homestead.yaml
+mutagen.*
+
+# =========================
+# 自动生成文件
+# =========================
+database/migrations/auto_*.php
+
+# =========================
+# 其他系统文件
+# =========================
+/docs/form/example
+.DS_Store
+*.rest

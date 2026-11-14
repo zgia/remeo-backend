@@ -1,0 +1,35 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "binary_operator_spaces": {
+            "default": "align_single_space_minimal",
+            "operators": {
+                "-=": "align_single_space_minimal",
+                ".=": "align_single_space_minimal",
+                "*=": "align_single_space_minimal",
+                "/=": "align_single_space_minimal",
+                "+=": "align_single_space_minimal",
+                "=": "align_single_space_minimal",
+                "=>": "align_single_space_minimal"
+            }
+        }
+    },
+    "exclude": [
+        "bootstrap",
+        "config",
+        "database",
+        "docs",
+        "public",
+        "resources",
+        "storage",
+        "tests",
+        "vendor"
+    ],
+    "notPath": [
+        ".php-cs-fixer.php",
+        "_ide_helper.php",
+        "app/Console/Commands/TestCmd.php",
+        "app/Console/Commands/Fhw.php",
+        "app/Console/Commands/Zjp.php"
+    ]
+}

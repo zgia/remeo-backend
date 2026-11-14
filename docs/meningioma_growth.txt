@@ -1,0 +1,57 @@
+{
+    "*1": "Current scan",
+    "#1": "Maximum meningioma diameter on axial T1 with GAD (A)",
+    "#2": "Diameter perpendicular to (A) on axial T1 with GAD",
+    "#3": "Maximum height on coronal/sagittal T1 with GAD",
+    
+    "*2": "Initial scan",
+    "#4": "Maximum meningioma diameter (A) on axial T1 with GAD",
+    "#5": "Diameter perpendicular to A on axial T1 with GAD",
+    "#6": "Maximum height on coronal/sagittal T1 with GAD",
+    "#8": "Time between scans",
+
+    "#9": {
+        "label": "Volume 1",
+        "settings": {
+            "decimalPlaces": 2,
+            "expression": "(#1*#2*#3)/2"
+        }
+    },
+    "#10": {
+        "label": "Volume 2",
+        "settings": {
+            "decimalPlaces": 2,
+            "expression": "(#4*#5*#6)/2"
+        }
+    },
+    "#11": {
+        "label": "Volume difference ",
+        "settings": {
+            "decimalPlaces": 3,
+            "expression": "#9-#10"
+        }
+    },
+    "#12": {
+        "label": "Absolute growth rate (AGR)/year",
+        "settings": {
+            "decimalPlaces": 2,
+            "expression": "(#11/#8)*12",
+            "postfix": "cm³/year"
+        }
+    },
+    "#13": {
+        "label": "Relative growth rate/year",
+        "settings": {
+            "decimalPlaces": 2,
+            "expression": "((#11/#10)/#8)*1200",
+            "postfix": "%/year"
+        }
+    },
+    "#14": {
+        "label": "Significant meningioma growth",
+        "settings": {
+            "decimalPlaces": 0,
+            "expression": "(#12 >= 2 or (#12 >= 1 and #13 >= 30)) ? Yes : No"
+        }
+    }
+}
