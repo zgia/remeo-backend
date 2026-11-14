@@ -70,6 +70,11 @@ function canDownload(?array $user = null): bool
     return isAdministrator($user) || (! empty($user['id']) && in_array('download.patient', app(DoctorService::class)->getUserPermissions($user['id']), true));
 }
 
+function yes(): int
+{
+    return 1;
+}
+
 /** @param null|string $value @return string */
 function getYesNoText(?string $value = null): string
 {

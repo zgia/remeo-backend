@@ -109,7 +109,11 @@ class OutpatientService extends PatientService
         $perpage = (int) getOption('perpage', 20);
 
         // 处理当前医院所有医生的患者
-        $conds = ['patient.isout' => 1, 'patient.'.$this->deleteTag => 0, 'patient.deletedat' => 0];
+        $conds = [
+            'patient.isout'             => yes(),
+            'patient.'.$this->deleteTag => 0,
+            'patient.deletedat'         => 0,
+        ];
 
         // -1表示来查看其他医院的患者
         if ($hospitalid == -1 && isViewer(UserService::user())) {
@@ -168,13 +172,13 @@ class OutpatientService extends PatientService
                 'age'       => $p['age'],
                 'firstday'  => $p['firstday'],
                 'progress'  => [
-                    'firstsituation' => $p['firstsituation'] == 1 ? true : false,
-                    'firstvideo'     => $p['firstvideo']     == 1 ? true : false,
+                    'firstsituation' => $p['firstsituation'] == yes() ? true : false,
+                    'firstvideo'     => $p['firstvideo']     == yes() ? true : false,
                 ],
                 'checkcount'   => (int) $p['checkcount'],
                 'lastcheckday' => $p['lastcheckday'],
                 'nextcheckday' => $p['nextcheckday'],
-                'isin'         => $p['isin'] == 1,
+                'isin'         => $p['isin'] == yes(),
                 'recorder'     => $doctors[$p['doctorid']],
                 'isfemale'     => isFemale($p['gender']),
             ];
@@ -255,7 +259,7 @@ class OutpatientService extends PatientService
         // 门诊，isout=1；isin=0
         // 住院，isout=0；isin=1
         // 门诊转住院，isout=1；isin=1
-        $patient['isout'] = 1;
+        $patient['isout'] = yes();
 
         $patient['doctorid']   = currentUserId();
         $patient['hospitalid'] = currentHospitalId();
@@ -402,7 +406,6 @@ class OutpatientService extends PatientService
     /**
      * 复查
      *
-     *
      * @return array<string,mixed>
      */
     public function getCheck(int $treatmentid = 0)
@@ -443,7 +446,6 @@ class OutpatientService extends PatientService
 
     /**
      * 患者复查记录
-     *
      *
      * @return array<string,mixed>
      */

@@ -37,7 +37,7 @@ class SystemService
     /**
      * 分类
      *
-     * 注：分类parentid为0，表示父分类，title务必是字母+数字或者只有字母，请勿使用其他字符
+     * 父分类以 ckey 作为接口键名，title 仅用于显示；兼容旧数据中以 title 保存英文键名的情况。
      *
      * @return array<string,array<mixed>>
      */
@@ -49,10 +49,16 @@ class SystemService
         $titles     = [];
         foreach ($cats as $cat) {
             if ($cat['parentid'] == 0) {
-                $titles[$cat['id']]                    = strtolower($cat['title']);
-                $categories[strtolower($cat['title'])] = [];
+                $key = strtolower(trim($cat['ckey'] ?? ''));
+                if ($key === '') {
+                    $key = strtolower($cat['title']);
+                }
+                $titles[$cat['id']] = $key;
+
+                $categories[$key] = [];
             } else {
-                $id                                      = $titles[$cat['parentid']] == 'kps' ? static::KPS_MAPPING[$cat['id']] : $cat['id'];
+                $id = $titles[$cat['parentid']] == 'kps' ? static::KPS_MAPPING[$cat['id']] : $cat['id'];
+
                 $categories[$titles[$cat['parentid']]][] = [
                     'value' => $id,
                     'title' => $cat['title'],
@@ -66,7 +72,7 @@ class SystemService
     /**
      * 分类
      *
-     * 注：分类parentid为0，表示父分类，title务必是字母+数字或者只有字母，请勿使用其他字符
+     * 与表单选项共用分类键名，供详情和导出解析已保存的选项 ID。
      *
      * @return array<string,array<mixed>>
      */

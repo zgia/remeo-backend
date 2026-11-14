@@ -105,10 +105,21 @@ class ExportOutpatientService extends OutpatientService
      * 复诊标题的样式，参考住院随访(patient_ih.xlsx)的标题
      */
     public const CHECK_HEAD_STYLE = [
-        'font'      => ['name' => '等线', 'size' => 12],
-        'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD8D8D8']],
-        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-        'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        'font' => [
+            'name' => '等线',
+            'size' => 12,
+        ],
+        'fill' => [
+            'fillType'   => Fill::FILL_SOLID,
+            'startColor' => ['argb' => 'FFD8D8D8'],
+        ],
+        'alignment' => [
+            'horizontal' => Alignment::HORIZONTAL_CENTER,
+            'vertical'   => Alignment::VERTICAL_CENTER,
+        ],
+        'borders' => [
+            'allBorders' => ['borderStyle' => Border::BORDER_THIN],
+        ],
     ];
 
     /**

@@ -13,6 +13,7 @@ use App\Service\ExportInhospitalService;
 use App\Service\ExportOutpatientService;
 use App\Service\HospitalService;
 use App\Service\OutpatientService;
+use App\Service\SystemService;
 use App\Service\UserService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -421,6 +422,42 @@ class MigrationTest extends TestCase
         $this->getJson('/inhospital/getmedia?patientid=1')->assertOk()->assertJsonPath('data.0.id', $media['id']);
         $this->deleteJson('/inhospital/deletemedia', ['patientid' => 1, 'fileid' => $media['id']])->assertOk();
         $this->getJson('/inhospital/getmedia?patientid=1')->assertJsonPath('data', []);
+    }
+
+    public function test_category_keys_use_ckey_with_chinese_display_titles(): void
+    {
+        $this->signIn();
+        $groups = [
+            [1, 'kps', '体能状态评分', 2, '正常', 100],
+            [13, 'videostatus', '影像学检查', 14, '本院MR', 14],
+            [19, 'lesionposition', '病灶位置', 20, '左', 20],
+            [24, 'lesionpart', '病灶部位', 25, '额', 25],
+            [38, 'checkway', '复查方式', 39, '来院', 39],
+            [42, 'videoresult', '影像评估结果', 43, '未见复发', 43],
+            [48, 'histopathology', '组织病理', 49, '纤维型', 49],
+            [64, 'who', 'WHO分级', 65, 'WHO I级', 65],
+            [76, 'tumorbloodsupply', '肿瘤血供', 77, '丰富', 77],
+            [79, 'tumortexture', '肿瘤质地', 80, '软', 80],
+            [83, 'tumoradhesionlevel', '粘连程度', 84, '无黏连', 84],
+            [100, 'customcategory', '自定义分类', 101, '自定义选项', 101],
+        ];
+        foreach ($groups as [$parentId, $key, $title, $childId, $childTitle]) {
+            DB::table('category')->insert([
+                ['id' => $parentId, 'parentid' => 0, 'ckey' => $key, 'title' => $title],
+                ['id' => $childId, 'parentid' => $parentId, 'ckey' => '', 'title' => $childTitle],
+            ]);
+        }
+
+        $options    = $this->getJson('/globaloptions')->assertOk()->assertJsonPath('code', 0);
+        $categories = $this->getJson('/category')->assertOk()->assertJsonPath('code', 0);
+        $labels     = app(SystemService::class)->categoriesKV();
+        foreach ($groups as [$parentId, $key, $title, $childId, $childTitle, $value]) {
+            $expected = [['value' => $value, 'title' => $childTitle]];
+            $options->assertJsonPath('data.categories.'.$key, $expected)
+                ->assertJsonMissingPath('data.categories.'.$title);
+            $categories->assertJsonPath('data.'.$key, $expected);
+            $this->assertSame($childTitle, $labels[$key][$value]);
+        }
     }
 
     public function test_global_options_use_repositories_for_hospital_counts_and_categories(): void

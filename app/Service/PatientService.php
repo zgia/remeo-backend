@@ -159,7 +159,10 @@ class PatientService
      */
     public function getPatientById(int $patientid)
     {
-        $conds = ['patient.id' => $patientid, 'patient.deletedat' => 0];
+        $conds = [
+            'patient.id'        => $patientid,
+            'patient.deletedat' => 0,
+        ];
         if (! isViewer(UserService::user())) {
             $conds['patient.hospitalid'] = currentHospitalId();
         }
@@ -187,10 +190,12 @@ class PatientService
     {
         $patientid = $this->getPatientid();
 
-        Patient::query()->where('patient.id', $patientid)->update([
-            $this->deleteTag => 1,
-            'deletedat'      => timenow(),
-        ]);
+        Patient::query()
+            ->where('patient.id', $patientid)
+            ->update([
+                $this->deleteTag => 1,
+                'deletedat'      => timenow(),
+            ]);
 
         // 保存日志
         $log = [
@@ -224,9 +229,16 @@ class PatientService
 
         // 门诊的首诊，复查或者住院随访
         if ($treatmentid) {
-            $conds = ['id' => $treatmentid, 'patientid' => $patientid];
+            $conds = [
+                'id'        => $treatmentid,
+                'patientid' => $patientid,
+            ];
         } else {
-            $conds = ['patientid' => $patientid, 'outin' => $this->getOutInType(), 'hospseq' => $patient['hospseq']];
+            $conds = [
+                'patientid' => $patientid,
+                'outin'     => $this->getOutInType(),
+                'hospseq'   => $patient['hospseq'],
+            ];
         }
 
         $conds['deletedat'] = 0;
@@ -548,7 +560,7 @@ class PatientService
             // 门诊和住院选择的字段不同，缺失或未填写的值不能推断为“是”。
             foreach (['uterectomy', 'uterinefibroids', 'menopause'] as $field) {
                 $value             = (string) ($situation[$field] ?? '');
-                $situation[$field] = in_array($value, ['1', '2'], true) ? getYesNoText($value) : '';
+                $situation[$field] = in_array($value, ['1', '2']) ? getYesNoText($value) : '';
             }
         } else {
             $situation['uterectomy'] = '-';
@@ -588,7 +600,8 @@ class PatientService
         }
 
         if (! empty($situation['fertility'])) {
-            $fertility                        = [];
+            $fertility = [];
+
             [$fertility['g'],$fertility['p']] = array_pad(explode('-', $situation['fertility'], 2), 2, '');
 
             $situation['fertility'] = $fertility;
@@ -958,7 +971,7 @@ class PatientService
         return response()->download($filename, basename($filename), ['Content-Type' => $contentType])->deleteFileAfterSend(true);
     }
 
-    public static function getAgeFromIdcard($idcard): int
+    public static function getAgeFromIdcard(string $idcard): int
     {
         if (empty($idcard) || strlen($idcard) != 18) {
             return 0;
