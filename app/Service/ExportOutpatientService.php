@@ -387,7 +387,11 @@ class ExportOutpatientService extends OutpatientService
         $categories = $this->systemService->categoriesKV();
 
         // 处理当前医院所有医生的住院患者
-        $conds = ['patient.isin' => 0, 'patient.'.$this->deleteTag => 0, 'patient.deletedat' => 0];
+        $conds = [
+            'patient.isin'              => 0,
+            'patient.'.$this->deleteTag => 0,
+            'patient.deletedat'         => 0,
+        ];
 
         // 超级用户可以下载所有数据
         if (! isAdministrator()) {

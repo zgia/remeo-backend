@@ -67,7 +67,7 @@ class MigrationTest extends TestCase
     public function test_legacy_password_is_upgraded_and_logout_ends_session(): void
     {
         DB::table('user')->where('id', 1)->update(['password' => md5(md5('old-password').'abcdef'), 'salt' => 'abcdef']);
-        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'old-password'])
+        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'old-password', 'captcha' => $this->issueLoginCaptcha()])
             ->assertOk()->assertJsonPath('code', 0)->assertJsonMissingPath('data.token')->assertJsonMissingPath('data.user.password');
         $this->assertTrue(Hash::check('old-password', User::find(1)->password));
         $this->getJson('/signin/islogin')->assertOk()->assertJsonPath('data.user.name', '测试医生');
@@ -77,9 +77,9 @@ class MigrationTest extends TestCase
 
     public function test_deleted_account_and_wrong_password_cannot_login(): void
     {
-        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'wrong'])->assertStatus(401)->assertJsonMissingPath('data.password');
+        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'wrong', 'captcha' => $this->issueLoginCaptcha()])->assertStatus(401)->assertJsonMissingPath('data.password');
         DB::table('user')->where('id', 1)->update(['deletedat' => time()]);
-        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'test-password'])->assertStatus(401);
+        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'test-password', 'captcha' => $this->issueLoginCaptcha()])->assertStatus(401);
     }
 
     public function test_password_change_uses_laravel_validation_and_invalidates_old_sessions(): void
@@ -100,8 +100,9 @@ class MigrationTest extends TestCase
         $this->app['env'] = 'local';
         $this->getJson('/signin/csrf')->assertOk()->assertCookie('XSRF-TOKEN');
         $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'test-password'])->assertStatus(419);
+        $captcha = $this->issueLoginCaptcha();
         $this->withSession(['_token' => 'csrf-test'])->postJson('/signin/dologin', [
-            '_token' => 'csrf-test', 'mobile' => '13800000001', 'password' => 'test-password',
+            '_token' => 'csrf-test', 'mobile' => '13800000001', 'password' => 'test-password', 'captcha' => $captcha,
         ])->assertOk();
     }
 

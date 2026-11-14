@@ -15,7 +15,7 @@ class RouteAuthenticationTest extends TestCase
 {
     private const array PUBLIC_ROUTES = [
         '/', 'index', 'signin/csrf', 'signin/logout', 'signin/dologin',
-        'signin/sendsmscode', 'signin/resetpassword',
+        'signin/sendsmscode', 'signin/resetpassword', 'signin/captcha',
     ];
 
     public function test_guests_are_rejected_by_every_protected_business_route(): void
@@ -23,6 +23,9 @@ class RouteAuthenticationTest extends TestCase
         $checked = 0;
 
         foreach (Route::getRoutes() as $route) {
+            if (str_starts_with(ltrim($route->getActionName(), '\\'), 'Mews\\Captcha\\')) {
+                continue;
+            }
             if (! in_array('web', $route->gatherMiddleware(), true)
                 || in_array($route->uri(), self::PUBLIC_ROUTES, true)) {
                 continue;
@@ -42,7 +45,7 @@ class RouteAuthenticationTest extends TestCase
 
     public function test_public_entry_points_remain_accessible_without_a_session(): void
     {
-        foreach (['/', '/index', '/signin/csrf'] as $uri) {
+        foreach (['/', '/index', '/signin/csrf', '/signin/captcha'] as $uri) {
             $this->getJson($uri)->assertOk()->assertJsonPath('code', 0);
         }
 

@@ -40,7 +40,6 @@ class HospitalService
     /**
      * 列表
      *
-     *
      * @return array<string,mixed>
      */
     public function items(string $title)
@@ -105,10 +104,16 @@ class HospitalService
         if ($hospital['hospitalid']) {
             Hospital::query()
                 ->where('hospital.id', $hospital['hospitalid'])
-                ->update(['title' => $hospital['title'], 'updatedat' => timenow()]);
+                ->update([
+                    'title'     => $hospital['title'],
+                    'updatedat' => timenow(),
+                ]);
         } else {
             $hospital['hospitalid'] = Hospital::query()
-                ->insertGetId(['title' => $hospital['title'], 'createdat' => timenow()]);
+                ->insertGetId([
+                    'title'     => $hospital['title'],
+                    'createdat' => timenow(),
+                ]);
         }
 
         // 保存日志

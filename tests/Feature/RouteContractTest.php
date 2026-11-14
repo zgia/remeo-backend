@@ -114,6 +114,7 @@ class RouteContractTest extends TestCase
             'GET /index'                  => [[], ['code' => 0], []],
             'GET /signin/csrf'            => [[], ['msg' => '会话已初始化'], []],
             'POST /signin/logout'         => [[], ['msg' => '已退出登录'], []],
+            'GET /signin/captcha'         => [[], [], []],
             'POST /signin/dologin'        => [['mobile' => '13800000001', 'password' => 'route-test-password'], ['data.user.name' => '路由测试医生1'], []],
             'GET /signin/sendsmscode'     => [['mobile' => '13800000001'], ['msg' => '验证码已发送'], ['smscode' => ['userid' => 1, 'mobile' => '13800000001']]],
             'POST /signin/resetpassword'  => [['mobile' => '13800000001', 'smscode' => '123456'], ['msg' => '密码已重置'], []],
@@ -192,6 +193,9 @@ class RouteContractTest extends TestCase
     {
         $registered = [];
         foreach (Route::getRoutes() as $route) {
+            if (str_starts_with(ltrim($route->getActionName(), '\\'), 'Mews\\Captcha\\')) {
+                continue;
+            }
             if (! in_array('web', $route->gatherMiddleware(), true)) {
                 continue;
             }
@@ -213,9 +217,12 @@ class RouteContractTest extends TestCase
     #[DataProvider('routeCases')]
     public function test_route_success_contract(string $method, string $uri, array $parameters, array $expected, array $records): void
     {
-        if (! in_array($uri, ['/', '/index', '/signin/csrf', '/signin/dologin', '/signin/sendsmscode', '/signin/resetpassword'], true)) {
+        if (! in_array($uri, ['/', '/index', '/signin/csrf', '/signin/captcha', '/signin/dologin', '/signin/sendsmscode', '/signin/resetpassword'], true)) {
             $user = User::findOrFail(1);
             $this->actingAs($user)->withSession(['auth_password' => $user->password]);
+        }
+        if ($uri === '/signin/dologin') {
+            $parameters['captcha'] = $this->issueLoginCaptcha();
         }
         if ($uri === '/signin/resetpassword') {
             DB::table('smscode')->insert(['userid' => 1, 'mobile' => '13800000001', 'smscode' => '123456', 'createdat' => time(), 'smsday' => date('Ymd')]);

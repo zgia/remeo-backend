@@ -28,11 +28,13 @@ php artisan remeo:import-legacy remeo
 所有调用保留 `{code, msg, data}`，成功码仍为 `0`。前端发送 `Accept: application/json` 并启用 Axios `withCredentials`、`withXSRFToken`。
 
 1. `GET /signin/csrf`：建立会话并返回 `XSRF-TOKEN` Cookie。
-2. `POST /signin/dologin`：`mobile`、原始 `password`，成功返回 `data.user`。不再返回 JWT。
+2. `POST /signin/dologin`：`mobile`、原始 `password`、图形验证码 `captcha`，成功返回 `data.user`。不再返回 JWT。
 3. `GET /signin/islogin`：返回当前用户与权限；未登录返回 HTTP 401。
 4. `POST /signin/logout`：注销服务端会话、轮换 CSRF Token。
 5. `POST /signin/changepassword`：保留 `password/password1/password2`，使用 Laravel `current_password` 规则。当前会话保留；其他使用旧密码的会话下次请求失效。
 6. 原短信发送/重置地址保留并限流。短信网关地址由 `ALIYUN_SMS_URL` 提供。日志不记录验证码或新密码。
+
+登录页先调用 `GET /signin/captcha`，返回 `data.img`（JPEG Data URI），并在当前 Cookie 会话保存验证码。响应禁止缓存，不返回答案或校验密钥。验证码采用 `config/captcha.php` 的默认配置（当前 4 位、不区分大小写、60 秒有效）；刷新后旧图失效，校验尝试会消耗验证码，即使密码错误也必须换图。验证码缺失、错误、过期或来自其他会话时返回 HTTP 422，具体中文提示位于 `data.errors.captcha`。验证码接口每 IP 每分钟最多 30 次，登录仍为每分钟 5 次。前端加载失败可点击重试，登录失败自动刷新，提交过程中禁止重复提交和换图。
 
 写请求（POST/DELETE 等）必须携带 `X-XSRF-TOKEN`。CSRF 过期返回 419，参数错误返回 422，限流返回 429。前端不在 localStorage 存放认证凭证，已有 `token` 在登录信息同步时清除；缓存姓名不能作为登录证明。
 
@@ -40,7 +42,7 @@ php artisan remeo:import-legacy remeo
 
 `routes/web.php` 的业务路由统一放在 `Route::middleware(['auth', 'session.password'])->group(...)` 中：先由 Laravel 默认 `web` guard 验证会话，再校验登录时保存的密码散列，密码重置后的旧会话返回 HTTP 401。医院和医生管理路由嵌套 `can:manage-administration` 权限组；门诊、住院及下载仍保留各自的医院范围和下载权限检查。
 
-公开入口为 `/`、`/index`、`/signin/csrf`、`/signin/dologin`、`/signin/sendsmscode`、`/signin/resetpassword`。`/signin/logout` 允许未登录或已失效会话调用，便于幂等清理；仍受 CSRF 保护。框架健康检查 `/up` 独立于业务路由。新增业务接口应注册在认证组内，不能因增加同控制器的方法而自动公开。
+公开入口为 `/signin/captcha`、`/`、`/index`、`/signin/csrf`、`/signin/dologin`、`/signin/sendsmscode`、`/signin/resetpassword`。`/signin/logout` 允许未登录或已失效会话调用，便于幂等清理；仍受 CSRF 保护。框架健康检查 `/up` 独立于业务路由。新增业务接口应注册在认证组内，不能因增加同控制器的方法而自动公开。
 
 当前采用同源代理下的 Cookie 会话认证，使用 `auth` 即可；未安装 Sanctum，不使用 `auth:sanctum`。所有业务路由仍由 `web` 中间件组提供 Session 和 CSRF，接口路径、请求字段和响应格式保持不变。
 

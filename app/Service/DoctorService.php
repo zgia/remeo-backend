@@ -43,7 +43,12 @@ class DoctorService
         $userPermissions = $this->getUserPermissions($user['id']);
 
         // 路由权限
-        $permissions = ['hospital' => $isOperator, 'doctor' => $isOperator, 'otherih' => $isViewer, 'otherop' => $isViewer];
+        $permissions = [
+            'hospital' => $isOperator,
+            'doctor'   => $isOperator,
+            'otherih'  => $isViewer,
+            'otherop'  => $isViewer,
+        ];
 
         return [
             'isOperator'  => $isOperator,
@@ -137,8 +142,10 @@ class DoctorService
             foreach ($permissions as $code => $value) {
                 if (in_array($value, [true, 1, '1', 'true'], true)) {
                     UserPermission::query()->insert([
-                        'doctorid'  => $doctorid, 'permissioncode' => $code,
-                        'createdat' => timenow(), 'updatedat' => timenow(),
+                        'doctorid'       => $doctorid,
+                        'permissioncode' => $code,
+                        'createdat'      => timenow(),
+                        'updatedat'      => timenow(),
                     ]);
                 }
             }

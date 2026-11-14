@@ -17,6 +17,15 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
         beginDatabaseTransaction as private startTestTransaction;
     }
 
+    protected function issueLoginCaptcha(): string
+    {
+        // 使用真实生成接口和校验器，仅在测试中固定字符以获得可验证的答案。
+        config(['captcha.characters' => ['a'], 'captcha.default.length' => 4]);
+        $this->getJson('/signin/captcha')->assertOk()->assertJsonPath('code', 0);
+
+        return 'aaaa';
+    }
+
     /**
      * 必须先隔离表，再开启事务；MySQL 的临时表仅对当前连接可见。
      */

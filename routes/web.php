@@ -13,6 +13,7 @@ Route::get('/', [IndexController::class, 'index']);
 Route::get('/index', [IndexController::class, 'index']);
 
 Route::prefix('signin')->group(function (): void {
+    Route::get('/captcha', [SigninController::class, 'captcha'])->middleware('throttle:30,1,login-captcha');
     Route::get('/csrf', fn () => response()->json(['code' => 0, 'msg' => '会话已初始化', 'data' => (object) []]));
     Route::post('/logout', [SigninController::class, 'logout']);
     Route::post('/dologin', [SigninController::class, 'dologin'])->middleware('throttle:5,1');

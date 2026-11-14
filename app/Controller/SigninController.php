@@ -13,15 +13,24 @@ use App\Service\HospitalService;
 use App\Service\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Mews\Captcha\Captcha;
 
 /** Laravel 会话认证入口。 */
 class SigninController extends BaseController
 {
     public function __construct(private readonly UserService $userService, private readonly DoctorService $doctorService, private readonly HospitalService $hospitalService) {}
 
+    public function captcha(Captcha $captcha): JsonResponse
+    {
+        $image = $captcha->create('default', true);
+
+        return $this->success('验证码已生成', ['img' => $image['img']])
+            ->header('Cache-Control', 'no-store, private');
+    }
+
     public function dologin(LoginRequest $request): JsonResponse
     {
-        $credentials = $request->validated();
+        $credentials = $request->safe()->only(['mobile', 'password']);
         if (! Auth::attempt($credentials)) {
             return $this->failure('手机号或密码错误。', [], 401);
         }
