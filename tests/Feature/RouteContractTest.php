@@ -110,28 +110,28 @@ class RouteContractTest extends TestCase
     private static function cases(): array
     {
         $cases = [
-            'GET /'                       => [[], ['code' => 0], []],
-            'GET /index'                  => [[], ['code' => 0], []],
-            'GET /signin/csrf'            => [[], ['msg' => '会话已初始化'], []],
-            'POST /signin/logout'         => [[], ['msg' => '已退出登录'], []],
-            'GET /signin/captcha'         => [[], [], []],
-            'POST /signin/dologin'        => [['mobile' => '13800000001', 'password' => 'route-test-password'], ['data.user.name' => '路由测试医生1'], []],
-            'GET /signin/sendsmscode'     => [['mobile' => '13800000001'], ['msg' => '验证码已发送'], ['smscode' => ['userid' => 1, 'mobile' => '13800000001']]],
-            'POST /signin/resetpassword'  => [['mobile' => '13800000001', 'smscode' => '123456'], ['msg' => '密码已重置'], []],
-            'GET /signin/islogin'         => [[], ['data.user.name' => '路由测试医生1'], []],
-            'POST /signin/changepassword' => [['password' => 'route-test-password', 'password1' => 'changed-password', 'password2' => 'changed-password'], ['msg' => '密码修改成功'], []],
-            'GET /category'               => [[], ['data.route_category.0.title' => '路由测试字典项'], []],
-            'GET /globaloptions'          => [[], ['data.opTotal' => 1, 'data.ihTotal' => 1], []],
-            'GET /operator'               => [[], ['data.operator' => true, 'data.candownload' => true], []],
-            'POST /upload'                => [['patientid' => 102, 'uid' => 'route-upload'], ['data.uid' => 'route-upload'], ['media' => ['patientid' => 102]]],
-            'GET /hospital/all'           => [[], ['data.0.hospitalid' => 2], []],
-            'GET /hospital/items'         => [['title' => '路由测试医院'], ['data.total' => 1, 'data.items.0.title' => '路由测试医院'], []],
-            'POST /hospital/update'       => [['hospitalid' => 2, 'title' => '路由更新医院'], ['data.title' => '路由更新医院'], ['hospital' => ['id' => 2, 'title' => '路由更新医院']]],
-            'DELETE /hospital/delete'     => [['hospitalid' => 2], ['data.hospitalid' => 2], []],
-            'GET /doctor/items'           => [['title' => '路由测试医生2'], ['data.total' => 1, 'data.items.0.doctorid' => 2], []],
-            'POST /doctor/update'         => [['doctorid' => 2, 'realname' => '路由更新医生', 'mobile' => '13800000002', 'hospitalid' => 1, 'permissions' => ['download.patient' => 'true']], ['data.realname' => '路由更新医生', 'data.permissions.0' => 'download.patient'], ['user' => ['id' => 2, 'realname' => '路由更新医生'], 'userpermission' => ['doctorid' => 2, 'permissioncode' => 'download.patient']]],
-            'POST /doctor/resetpassword'  => [['doctorid' => 2], ['data.doctorid' => 2], []],
-            'DELETE /doctor/delete'       => [['doctorid' => 2], ['data.doctorid' => 2], []],
+            'GET /'                        => [[], ['code' => 0], []],
+            'GET /index'                   => [[], ['code' => 0], []],
+            'GET /signin/csrf'             => [[], ['msg' => '会话已初始化'], []],
+            'POST /signin/logout'          => [[], ['msg' => '已退出登录'], []],
+            'GET /signin/captcha'          => [[], [], []],
+            'POST /signin/login'           => [['mobile' => '13800000001', 'password' => 'route-test-password'], ['data.user.name' => '路由测试医生1'], []],
+            'GET /signin/send-sms-code'    => [['mobile' => '13800000001'], ['msg' => '验证码已发送'], ['smscode' => ['userid' => 1, 'mobile' => '13800000001']]],
+            'POST /signin/reset-password'  => [['mobile' => '13800000001', 'smscode' => '123456'], ['msg' => '密码已重置'], []],
+            'GET /signin/is-login'         => [[], ['data.user.name' => '路由测试医生1'], []],
+            'POST /signin/change-password' => [['password' => 'route-test-password', 'password1' => 'changed-password', 'password2' => 'changed-password'], ['msg' => '密码修改成功'], []],
+            'GET /category'                => [[], ['data.route_category.0.title' => '路由测试字典项'], []],
+            'GET /global-options'          => [[], ['data.opTotal' => 1, 'data.ihTotal' => 1], []],
+            'GET /operator'                => [[], ['data.operator' => true, 'data.candownload' => true], []],
+            'POST /upload'                 => [['patientid' => 102, 'uid' => 'route-upload'], ['data.uid' => 'route-upload'], ['media' => ['patientid' => 102]]],
+            'GET /hospital/all'            => [[], ['data.0.hospitalid' => 2], []],
+            'GET /hospital/items'          => [['title' => '路由测试医院'], ['data.total' => 1, 'data.items.0.title' => '路由测试医院'], []],
+            'POST /hospital'               => [['hospitalid' => 2, 'title' => '路由更新医院'], ['data.title' => '路由更新医院'], ['hospital' => ['id' => 2, 'title' => '路由更新医院']]],
+            'DELETE /hospital'             => [['hospitalid' => 2], ['data.hospitalid' => 2], []],
+            'GET /doctor/items'            => [['title' => '路由测试医生2'], ['data.total' => 1, 'data.items.0.doctorid' => 2], []],
+            'POST /doctor'                 => [['doctorid' => 2, 'realname' => '路由更新医生', 'mobile' => '13800000002', 'hospitalid' => 1, 'permissions' => ['download.patient' => 'true']], ['data.realname' => '路由更新医生', 'data.permissions.0' => 'download.patient'], ['user' => ['id' => 2, 'realname' => '路由更新医生'], 'userpermission' => ['doctorid' => 2, 'permissioncode' => 'download.patient']]],
+            'POST /doctor/reset-password'  => [['doctorid' => 2], ['data.doctorid' => 2], []],
+            'DELETE /doctor'               => [['doctorid' => 2], ['data.doctorid' => 2], []],
         ];
         foreach (['outpatient' => 101, 'inhospital' => 102] as $module => $id) {
             $inpatient     = $module === 'inhospital';
@@ -140,41 +140,41 @@ class RouteContractTest extends TestCase
             $situationType = $inpatient ? SituationType::IhInhospital->value : SituationType::OpFisrt->value;
             $name          = $inpatient ? '路由住院患者' : '路由门诊患者';
             $cases += [
-                "GET /$module/items"            => [[], ['data.total' => 1, 'data.items.0.patientid' => $id], []],
-                "GET /$module/download"         => [[], [], []],
-                "POST /$module/updatepatient"   => [$patient + ['realname' => '路由更新患者', 'gender' => 1, 'age' => 46, 'mobile' => '13900000101', 'firstday' => '2026-11-14', 'hospday' => '2026-11-14', 'hospcode' => 'ROUTE-UPDATED'], ['data.patientid' => $id], ['patient' => ['id' => $id, 'realname' => '路由更新患者', 'age' => 46]]],
-                "GET /$module/getpatient"       => [$patient, ['data.patientid' => $id, 'data.realname' => $name], []],
-                "DELETE /$module/delete"        => [$patient, ['code' => 0], []],
-                "POST /$module/updatesituation" => [$patient + ['comefrom' => $situationType, 'cc' => '更新后的主诉', 'kps' => 90], ['data.patientid' => $id], ['situation' => ['patientid' => $id, 'treatmentid' => 0, 'stype' => $situationType, 'cc' => '更新后的主诉', 'kps' => 90]]],
-                "GET /$module/getsituation"     => [$patient + ['comefrom' => $situationType], ['data.cc' => '路由测试主诉', 'data.kps' => 100], []],
-                "POST /$module/updatevideo"     => [$patient + ['vtype' => $videoType, 'videoday' => '2026-11-20', 'cemrilength' => 20], ['data.patientid' => $id], ['video' => ['patientid' => $id, 'treatmentid' => 0, 'vtype' => $videoType, 'cemrilength' => 20]]],
-                "GET /$module/getvideo"         => [$patient + ['vtype' => $videoType], ['data.cemrilength' => 10], []],
-                "GET /$module/homepage"         => [$patient, ['data.patientid' => $id, 'data.patient.realname' => $name, 'data.situation.cc' => '路由测试主诉'], []],
+                "GET /$module/items"      => [[], ['data.total' => 1, 'data.items.0.patientid' => $id], []],
+                "GET /$module/download"   => [[], [], []],
+                "POST /$module/patient"   => [$patient + ['realname' => '路由更新患者', 'gender' => 1, 'age' => 46, 'mobile' => '13900000101', 'firstday' => '2026-11-14', 'hospday' => '2026-11-14', 'hospcode' => 'ROUTE-UPDATED'], ['data.patientid' => $id], ['patient' => ['id' => $id, 'realname' => '路由更新患者', 'age' => 46]]],
+                "GET /$module/patient"    => [$patient, ['data.patientid' => $id, 'data.realname' => $name], []],
+                "DELETE /$module/patient" => [$patient, ['code' => 0], []],
+                "POST /$module/situation" => [$patient + ['comefrom' => $situationType, 'cc' => '更新后的主诉', 'kps' => 90], ['data.patientid' => $id], ['situation' => ['patientid' => $id, 'treatmentid' => 0, 'stype' => $situationType, 'cc' => '更新后的主诉', 'kps' => 90]]],
+                "GET /$module/situation"  => [$patient + ['comefrom' => $situationType], ['data.cc' => '路由测试主诉', 'data.kps' => 100], []],
+                "POST /$module/video"     => [$patient + ['vtype' => $videoType, 'videoday' => '2026-11-20', 'cemrilength' => 20], ['data.patientid' => $id], ['video' => ['patientid' => $id, 'treatmentid' => 0, 'vtype' => $videoType, 'cemrilength' => 20]]],
+                "GET /$module/video"      => [$patient + ['vtype' => $videoType], ['data.cemrilength' => 10], []],
+                "GET /$module/homepage"   => [$patient, ['data.patientid' => $id, 'data.patient.realname' => $name, 'data.situation.cc' => '路由测试主诉'], []],
             ];
             $action = $inpatient ? 'followup' : 'check';
             $cases += [
-                "POST /$module/update$action"    => [$patient + ['treatment' => ['checkday' => '2027-01-14', 'checkalive' => 1], 'situation' => ['cc' => '新增复查随访主诉'], 'video' => ['videoday' => '2027-01-14']], ['data.patientid' => $id], ['treatment' => ['patientid' => $id, 'checkday' => '2027-01-14'], 'situation' => ['patientid' => $id, 'cc' => '新增复查随访主诉'], 'patient' => ['id' => $id, $action.'count' => 2]]],
-                "GET /$module/get$action"        => [$patient + ['treatmentid' => $id], ['data.treatmentid' => $id, 'data.situation.cc' => '路由测试主诉'], []],
-                "GET /$module/get{$action}count" => [$patient, ['data.patientid' => $id, 'data.'.$action.'count' => 1], []],
-                "GET /$module/{$action}page"     => [$patient + ['treatmentid' => $id], ['data.treatmentid' => $id, 'data.patient.realname' => $name], []],
-                "GET /$module/{$action}daylist"  => [$patient, ['data.0.treatmentid' => $id, 'data.0.checkday' => '2026-12-14'], []],
+                "POST /$module/$action"           => [$patient + ['treatment' => ['checkday' => '2027-01-14', 'checkalive' => 1], 'situation' => ['cc' => '新增复查随访主诉'], 'video' => ['videoday' => '2027-01-14']], ['data.patientid' => $id], ['treatment' => ['patientid' => $id, 'checkday' => '2027-01-14'], 'situation' => ['patientid' => $id, 'cc' => '新增复查随访主诉'], 'patient' => ['id' => $id, $action.'count' => 2]]],
+                "GET /$module/$action"            => [$patient + ['treatmentid' => $id], ['data.treatmentid' => $id, 'data.situation.cc' => '路由测试主诉'], []],
+                "GET /$module/{$action}-count"    => [$patient, ['data.patientid' => $id, 'data.'.$action.'count' => 1], []],
+                "GET /$module/{$action}-page"     => [$patient + ['treatmentid' => $id], ['data.treatmentid' => $id, 'data.patient.realname' => $name], []],
+                "GET /$module/{$action}-day-list" => [$patient, ['data.0.treatmentid' => $id, 'data.0.checkday' => '2026-12-14'], []],
             ];
         }
 
         return $cases + [
-            'POST /outpatient/hospitalized'       => [['patientid' => 101], ['code' => 0], ['patient' => ['id' => 101, 'isin' => 1, 'hospseq' => 1]]],
-            'GET /outpatient/ishosp'              => [['patientid' => 101], ['data.isin' => 0], []],
-            'POST /inhospital/inhospagain'        => [['patientid' => 102], ['data.hospseq' => 2], ['patient' => ['id' => 102, 'hospseq' => 2, 'hospday' => null], 'hospday' => ['patientid' => 102, 'hospseq' => 1, 'inday' => '2026-11-14'], 'progress' => ['patientid' => 102, 'hospsituation' => 0, 'surgery' => 0]]],
-            'POST /inhospital/updatecode'         => [['patientid' => 102, 'hospcode' => 'ROUTE-NEW', 'hospday' => '2026-11-20'], ['data.hospcode' => 'ROUTE-NEW'], ['patient' => ['id' => 102, 'hospcode' => 'ROUTE-NEW', 'hospday' => '2026-11-20']]],
-            'POST /inhospital/updateinitialstate' => [['patientid' => 102, 'data' => ['initialstate' => 2]], ['data.data.initialstate' => 2], ['patient' => ['id' => 102, 'hospinitialstate' => 2]]],
-            'GET /inhospital/getinitialstate'     => [['patientid' => 102], ['data.initialstate' => 1], []],
-            'POST /inhospital/updatesurgery'      => [['patientid' => 102, 'surgeryday' => '2026-11-20', 'surgeryway' => 2], ['data.patientid' => 102], ['surgery' => ['patientid' => 102, 'surgeryday' => '2026-11-20', 'surgeryway' => 2]]],
-            'GET /inhospital/getsurgery'          => [['patientid' => 102], ['data.surgeryday' => '2026-11-15', 'data.surgeryway' => 1], []],
-            'POST /inhospital/updatepathology'    => [['patientid' => 102, 'pycode' => 'ROUTE-PY-NEW', 'who' => 65], ['data.patientid' => 102], ['pathology' => ['patientid' => 102, 'pycode' => 'ROUTE-PY-NEW', 'who' => 65]]],
-            'GET /inhospital/getpathology'        => [['patientid' => 102], ['data.pycode' => 'ROUTE-PY'], []],
-            'GET /inhospital/homepagedaylist'     => [['patientid' => 102], ['data.0.hospseq' => 1, 'data.0.hospday' => '2026-11-14'], []],
-            'GET /inhospital/getmedia'            => [['patientid' => 102], ['data.0.id' => 1], []],
-            'DELETE /inhospital/deletemedia'      => [['patientid' => 102, 'fileid' => 1], ['code' => 0], []],
+            'POST /outpatient/hospitalized'     => [['patientid' => 101], ['code' => 0], ['patient' => ['id' => 101, 'isin' => 1, 'hospseq' => 1]]],
+            'GET /outpatient/is-hosp'           => [['patientid' => 101], ['data.isin' => 0], []],
+            'POST /inhospital/inhosp-again'     => [['patientid' => 102], ['data.hospseq' => 2], ['patient' => ['id' => 102, 'hospseq' => 2, 'hospday' => null], 'hospday' => ['patientid' => 102, 'hospseq' => 1, 'inday' => '2026-11-14'], 'progress' => ['patientid' => 102, 'hospsituation' => 0, 'surgery' => 0]]],
+            'POST /inhospital/hosp-info'        => [['patientid' => 102, 'hospcode' => 'ROUTE-NEW', 'hospday' => '2026-11-20'], ['data.hospcode' => 'ROUTE-NEW'], ['patient' => ['id' => 102, 'hospcode' => 'ROUTE-NEW', 'hospday' => '2026-11-20']]],
+            'POST /inhospital/initial-state'    => [['patientid' => 102, 'data' => ['initialstate' => 2]], ['data.data.initialstate' => 2], ['patient' => ['id' => 102, 'hospinitialstate' => 2]]],
+            'GET /inhospital/initial-state'     => [['patientid' => 102], ['data.initialstate' => 1], []],
+            'POST /inhospital/surgery'          => [['patientid' => 102, 'surgeryday' => '2026-11-20', 'surgeryway' => 2], ['data.patientid' => 102], ['surgery' => ['patientid' => 102, 'surgeryday' => '2026-11-20', 'surgeryway' => 2]]],
+            'GET /inhospital/surgery'           => [['patientid' => 102], ['data.surgeryday' => '2026-11-15', 'data.surgeryway' => 1], []],
+            'POST /inhospital/pathology'        => [['patientid' => 102, 'pycode' => 'ROUTE-PY-NEW', 'who' => 65], ['data.patientid' => 102], ['pathology' => ['patientid' => 102, 'pycode' => 'ROUTE-PY-NEW', 'who' => 65]]],
+            'GET /inhospital/pathology'         => [['patientid' => 102], ['data.pycode' => 'ROUTE-PY'], []],
+            'GET /inhospital/homepage-day-list' => [['patientid' => 102], ['data.0.hospseq' => 1, 'data.0.hospday' => '2026-11-14'], []],
+            'GET /inhospital/media'             => [['patientid' => 102], ['data.0.id' => 1], []],
+            'DELETE /inhospital/media'          => [['patientid' => 102, 'fileid' => 1], ['code' => 0], []],
         ];
     }
 
@@ -217,14 +217,14 @@ class RouteContractTest extends TestCase
     #[DataProvider('routeCases')]
     public function test_route_success_contract(string $method, string $uri, array $parameters, array $expected, array $records): void
     {
-        if (! in_array($uri, ['/', '/index', '/signin/csrf', '/signin/captcha', '/signin/dologin', '/signin/sendsmscode', '/signin/resetpassword'], true)) {
+        if (! in_array($uri, ['/', '/index', '/signin/csrf', '/signin/captcha', '/signin/login', '/signin/send-sms-code', '/signin/reset-password'], true)) {
             $user = User::findOrFail(1);
             $this->actingAs($user)->withSession(['auth_password' => $user->password]);
         }
-        if ($uri === '/signin/dologin') {
+        if ($uri === '/signin/login') {
             $parameters['captcha'] = $this->issueLoginCaptcha();
         }
-        if ($uri === '/signin/resetpassword') {
+        if ($uri === '/signin/reset-password') {
             DB::table('smscode')->insert(['userid' => 1, 'mobile' => '13800000001', 'smscode' => '123456', 'created_at' => now(), 'updated_at' => now(), 'smsday' => date('Ymd')]);
         }
         if ($uri === '/upload') {
@@ -247,8 +247,8 @@ class RouteContractTest extends TestCase
         foreach ($records as $table => $record) {
             $this->assertDatabaseHas($table, $record);
         }
-        $this->assertSideEffects($uri, $parameters, $response);
-        if (! in_array($uri, ['/signin/sendsmscode', '/signin/resetpassword'], true)) {
+        $this->assertSideEffects($method, $uri, $parameters, $response);
+        if (! in_array($uri, ['/signin/send-sms-code', '/signin/reset-password'], true)) {
             Http::assertNothingSent();
         }
     }
@@ -256,21 +256,21 @@ class RouteContractTest extends TestCase
     /**
      * @param  array<string,mixed>  $parameters
      */
-    private function assertSideEffects(string $uri, array $parameters, TestResponse $response): void
+    private function assertSideEffects(string $method, string $uri, array $parameters, TestResponse $response): void
     {
-        $deleted = match ($uri) {
-            '/hospital/delete'        => ['hospital', 2],
-            '/doctor/delete'          => ['user', 2],
-            '/outpatient/delete'      => ['patient', 101],
-            '/inhospital/delete'      => ['patient', 102],
-            '/inhospital/deletemedia' => ['media', 1],
-            default                   => null,
+        $deleted = match ($method.' '.$uri) {
+            'DELETE /hospital'           => ['hospital', 2],
+            'DELETE /doctor'             => ['user', 2],
+            'DELETE /outpatient/patient' => ['patient', 101],
+            'DELETE /inhospital/patient' => ['patient', 102],
+            'DELETE /inhospital/media'   => ['media', 1],
+            default                      => null,
         };
         if ($deleted !== null) {
             [$table, $id] = $deleted;
             $this->assertNotNull(DB::table($table)->where('id', $id)->value('deleted_at'));
         }
-        if ($uri === '/signin/dologin' || $uri === '/signin/changepassword') {
+        if ($uri === '/signin/login' || $uri === '/signin/change-password') {
             $this->assertAuthenticatedAs(User::findOrFail(1));
             $this->assertSame(User::findOrFail(1)->password, session('auth_password'));
             $response->assertJsonMissingPath('data.user.password')->assertJsonMissingPath('data.user.salt');
@@ -282,17 +282,17 @@ class RouteContractTest extends TestCase
         if ($uri === '/signin/csrf') {
             $response->assertCookie('XSRF-TOKEN');
         }
-        if ($uri === '/signin/changepassword') {
+        if ($uri === '/signin/change-password') {
             $this->assertTrue(Hash::check('changed-password', User::findOrFail(1)->password));
         }
-        if ($uri === '/doctor/resetpassword') {
+        if ($uri === '/doctor/reset-password') {
             $this->assertTrue(Hash::check('0000002', User::findOrFail(2)->password));
         }
-        if ($uri === '/signin/sendsmscode' || $uri === '/signin/resetpassword') {
+        if ($uri === '/signin/send-sms-code' || $uri === '/signin/reset-password') {
             Http::assertSentCount(1);
             Http::assertSent(function (Request $request) use ($uri): bool {
                 $data = json_decode($request['templateParam'], true, 512, JSON_THROW_ON_ERROR);
-                if ($uri === '/signin/sendsmscode') {
+                if ($uri === '/signin/send-sms-code') {
                     $code = (string) DB::table('smscode')->where('userid', 1)->value('smscode');
                     $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
                     $this->assertSame($code, $data['code']);

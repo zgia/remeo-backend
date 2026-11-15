@@ -185,7 +185,7 @@ final class SmokeSearchCommand extends Command
             $cases[] = $this->case('断言', '/inhospital/items', ['realname' => $hospcode], '住院号搜索', 1);
         }
 
-        foreach (['/hospital/items', '/doctor/items', '/globaloptions', '/category', '/operator', '/signin/islogin'] as $uri) {
+        foreach (['/hospital/items', '/doctor/items', '/global-options', '/category', '/operator', '/signin/is-login'] as $uri) {
             $cases[] = $this->case('断言', $uri, []);
         }
 
@@ -199,7 +199,7 @@ final class SmokeSearchCommand extends Command
         $cases[] = $this->case('探测', '/inhospital/items', ['realname' => str_repeat('测', 200)]);
         $cases[] = $this->case('探测', '/inhospital/items', ['sort' => 'not_a_column', 'order' => 'ascending']);
         $cases[] = $this->case('探测', '/outpatient/items', ['sort' => 'id', 'order' => 'sideways']);
-        $cases[] = $this->case('探测', '/inhospital/getpatient', ['patientid' => 999999], '不存在的患者');
+        $cases[] = $this->case('探测', '/inhospital/patient', ['patientid' => 999999], '不存在的患者');
 
         return $cases;
     }
@@ -347,7 +347,7 @@ final class SmokeSearchCommand extends Command
         $patients = [];
         foreach ($softDeletedDoctor->merge($inpatientEmptyDate)->merge($emptyIdcard)->merge($outpatientEmptyDate) as $row) {
             $module                   = (int) $row->isin === 1 ? 'inhospital' : 'outpatient';
-            $patients[(int) $row->id] = [(int) $row->id, '/'.$module.'/getpatient'];
+            $patients[(int) $row->id] = [(int) $row->id, '/'.$module.'/patient'];
         }
 
         // 每个患者同时检查详情与首页两个读取路径。

@@ -59,12 +59,12 @@ php artisan remeo:smoke --strict   # 边界探测组的发现也计为失败
 | --- | --- | --- |
 | GET | `/signin/csrf` | 建立会话并返回 `XSRF-TOKEN` Cookie |
 | GET | `/signin/captcha` | 返回 `data.img`（JPEG Data URI） |
-| POST | `/signin/dologin` | `mobile`、原始 `password`、图形验证码 `captcha`，成功返回 `data.user`，不返回 JWT |
-| GET | `/signin/islogin` | 返回当前用户与权限；未登录返回 HTTP 401 |
+| POST | `/signin/login` | `mobile`、原始 `password`、图形验证码 `captcha`，成功返回 `data.user`，不返回 JWT |
+| GET | `/signin/is-login` | 返回当前用户与权限；未登录返回 HTTP 401 |
 | POST | `/signin/logout` | 注销服务端会话、轮换 CSRF Token |
-| POST | `/signin/changepassword` | `password/password1/password2`，使用 `current_password` 规则 |
-| GET | `/signin/sendsmscode` | 发送短信验证码，受限于每分钟 3 次 |
-| POST | `/signin/resetpassword` | 短信重置密码，受限于每分钟 3 次 |
+| POST | `/signin/change-password` | `password/password1/password2`，使用 `current_password` 规则 |
+| GET | `/signin/send-sms-code` | 发送短信验证码，受限于每分钟 3 次 |
+| POST | `/signin/reset-password` | 短信重置密码，受限于每分钟 3 次 |
 
 验证码在 Cookie 会话中保存，响应禁止缓存且不返回答案或校验密钥。配置取 `config/captcha.php` 默认项（当前 4 位、不区分大小写、60 秒有效）：刷新后旧图失效，校验尝试即消耗验证码，密码错误也必须换图。缺失、错误、过期或来自其他会话时返回 HTTP 422，中文提示位于 `data.errors.captcha`。验证码接口每 IP 每分钟最多 30 次，登录每分钟 5 次。前端加载失败可点击重试，登录失败自动刷新，提交过程中禁止重复提交和换图。
 
@@ -80,9 +80,9 @@ php artisan remeo:smoke --strict   # 边界探测组的发现也计为失败
 
 `routes/web.php` 的业务路由统一放在 `Route::middleware(['auth', 'session.password'])->group(...)` 中：先由 `web` guard 验证会话，再校验登录时保存的密码散列，密码重置后的旧会话返回 HTTP 401。医院和医生管理路由嵌套 `can:manage-administration` 权限组；门诊、住院及下载仍保留各自的医院范围和下载权限检查。
 
-公开入口仅 `/signin/captcha`、`/`、`/index`、`/signin/csrf`、`/signin/dologin`、`/signin/sendsmscode`、`/signin/resetpassword`。`/signin/logout` 允许未登录或已失效会话调用，便于幂等清理，仍受 CSRF 保护。框架健康检查 `/up` 独立于业务路由。新增业务接口应注册在认证组内，不能因增加同控制器的方法而自动公开。
+公开入口仅 `/signin/captcha`、`/`、`/index`、`/signin/csrf`、`/signin/login`、`/signin/send-sms-code`、`/signin/reset-password`。`/signin/logout` 允许未登录或已失效会话调用，便于幂等清理，仍受 CSRF 保护。框架健康检查 `/up` 独立于业务路由。新增业务接口应注册在认证组内，不能因增加同控制器的方法而自动公开。
 
-认证使用同源代理下的 Cookie 会话，路由中间件用 `auth` 即可，未安装 Sanctum，不使用 `auth:sanctum`。所有业务路由仍由 `web` 中间件组提供 Session 和 CSRF，接口路径、请求字段和响应格式保持不变。
+认证使用同源代理下的 Cookie 会话，路由中间件用 `auth` 即可，未安装 Sanctum，不使用 `auth:sanctum`。所有业务路由仍由 `web` 中间件组提供 Session 和 CSRF，请求字段和响应格式保持不变。
 
 ### 部署与会话存储
 
@@ -90,7 +90,7 @@ php artisan remeo:smoke --strict   # 边界探测组的发现也计为失败
 
 ## 接口与数据契约
 
-- 门诊、住院、医院、医生、影像、手术、病理和随访的接口路径及主要字段保持不变。
+- 门诊、住院、医院、医生、影像、手术、病理和随访的接口统一使用 kebab-case 命名：读与写共用同一资源路径，由 HTTP 方法区分（如 `POST /inhospital/situation` 写入、`GET /inhospital/situation` 读取、`DELETE /inhospital/patient` 删除）。集合、导出与分页类接口保留 `items`/`download`/`homepage` 等既有名称。
 - GET 参数走 query；POST/DELETE 支持表单体；上传使用 multipart/form-data。
 - 影像上传只接收 JPG/PNG，最大 10 MiB。
 - 患者查询保留软删除作用域、医院范围及原门诊/住院删除标记。

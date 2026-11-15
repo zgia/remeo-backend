@@ -14,8 +14,8 @@ use Tests\TestCase;
 class RouteAuthenticationTest extends TestCase
 {
     private const array PUBLIC_ROUTES = [
-        '/', 'index', 'signin/csrf', 'signin/logout', 'signin/dologin',
-        'signin/sendsmscode', 'signin/resetpassword', 'signin/captcha',
+        '/', 'index', 'signin/csrf', 'signin/logout', 'signin/login',
+        'signin/send-sms-code', 'signin/reset-password', 'signin/captcha',
     ];
 
     public function test_guests_are_rejected_by_every_protected_business_route(): void
@@ -50,9 +50,9 @@ class RouteAuthenticationTest extends TestCase
         }
 
         // 空参数只触发表单验证，不投递短信或重置真实账户密码。
-        $this->postJson('/signin/dologin')->assertStatus(422);
-        $this->getJson('/signin/sendsmscode')->assertStatus(422);
-        $this->postJson('/signin/resetpassword')->assertStatus(422);
+        $this->postJson('/signin/login')->assertStatus(422);
+        $this->getJson('/signin/send-sms-code')->assertStatus(422);
+        $this->postJson('/signin/reset-password')->assertStatus(422);
         $this->postJson('/signin/logout')->assertOk()->assertJsonPath('code', 0);
         $this->postJson('/signin/logout')->assertOk()->assertJsonPath('code', 0);
     }
@@ -62,7 +62,7 @@ class RouteAuthenticationTest extends TestCase
         $user = new User;
         $user->forceFill(['id' => 1, 'password' => 'updated-password-hash']);
 
-        foreach (['/category', '/operator', '/globaloptions', '/hospital/items', '/doctor/items', '/outpatient/items', '/inhospital/items', '/signin/islogin'] as $uri) {
+        foreach (['/category', '/operator', '/global-options', '/hospital/items', '/doctor/items', '/outpatient/items', '/inhospital/items', '/signin/is-login'] as $uri) {
             $this->actingAs($user)->withSession(['auth_password' => 'old-password-hash']);
             $this->getJson($uri)->assertStatus(401)->assertJsonPath('code', 1);
             $this->assertGuest();

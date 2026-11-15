@@ -29,13 +29,13 @@ class CheckRequestTest extends TestCase
      */
     public static function modules(): iterable
     {
-        yield '门诊复查' => ['outpatient', 'updatecheck'];
-        yield '住院随访' => ['inhospital', 'updatefollowup'];
+        yield '门诊复查' => ['outpatient', 'check'];
+        yield '住院随访' => ['inhospital', 'followup'];
     }
 
     private function createPatient(string $module): int
     {
-        return $this->postJson('/'.$module.'/updatepatient', [
+        return $this->postJson('/'.$module.'/patient', [
             'realname' => '影像尺寸测试患者', 'gender' => 1, 'age' => 45,
             'mobile'   => '13900000001', 'hospcode' => 'VIDEO-001',
             'firstday' => '2026-11-14', 'hospday' => '2026-11-14',

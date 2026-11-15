@@ -73,7 +73,7 @@ class LoginCaptchaTest extends TestCase
 
     private function login(mixed $captcha): TestResponse
     {
-        return $this->postJson('/signin/dologin', [
+        return $this->postJson('/signin/login', [
             'mobile' => '13800000001', 'password' => 'wrong', 'captcha' => $captcha,
         ]);
     }

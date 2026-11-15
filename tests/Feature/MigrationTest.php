@@ -62,41 +62,41 @@ class MigrationTest extends TestCase
 
     public function test_guest_cannot_access_patient_or_management_routes(): void
     {
-        foreach (['/outpatient/items', '/inhospital/getpatient?patientid=1', '/hospital/items', '/doctor/items', '/signin/changepassword'] as $uri) {
-            ($uri === '/signin/changepassword' ? $this->postJson($uri) : $this->getJson($uri))->assertStatus(401)->assertJsonPath('code', 1);
+        foreach (['/outpatient/items', '/inhospital/patient?patientid=1', '/hospital/items', '/doctor/items', '/signin/change-password'] as $uri) {
+            ($uri === '/signin/change-password' ? $this->postJson($uri) : $this->getJson($uri))->assertStatus(401)->assertJsonPath('code', 1);
         }
         $this->getJson('/')->assertOk()->assertJsonPath('code', 0);
-        $this->get('/signin/islogin')->assertStatus(401);
+        $this->get('/signin/is-login')->assertStatus(401);
     }
 
     public function test_legacy_password_is_upgraded_and_logout_ends_session(): void
     {
         DB::table('user')->where('id', 1)->update(['password' => md5(md5('old-password').'abcdef'), 'salt' => 'abcdef']);
-        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'old-password', 'captcha' => $this->issueLoginCaptcha()])
+        $this->postJson('/signin/login', ['mobile' => '13800000001', 'password' => 'old-password', 'captcha' => $this->issueLoginCaptcha()])
             ->assertOk()->assertJsonPath('code', 0)->assertJsonMissingPath('data.token')->assertJsonMissingPath('data.user.password');
         $this->assertTrue(Hash::check('old-password', User::find(1)->password));
-        $this->getJson('/signin/islogin')->assertOk()->assertJsonPath('data.user.name', '测试医生');
+        $this->getJson('/signin/is-login')->assertOk()->assertJsonPath('data.user.name', '测试医生');
         $this->postJson('/signin/logout')->assertOk();
-        $this->getJson('/signin/islogin')->assertStatus(401);
+        $this->getJson('/signin/is-login')->assertStatus(401);
     }
 
     public function test_deleted_account_and_wrong_password_cannot_login(): void
     {
-        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'wrong', 'captcha' => $this->issueLoginCaptcha()])->assertStatus(401)->assertJsonMissingPath('data.password');
+        $this->postJson('/signin/login', ['mobile' => '13800000001', 'password' => 'wrong', 'captcha' => $this->issueLoginCaptcha()])->assertStatus(401)->assertJsonMissingPath('data.password');
         DB::table('user')->where('id', 1)->update(['deleted_at' => now()]);
-        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'test-password', 'captcha' => $this->issueLoginCaptcha()])->assertStatus(401);
+        $this->postJson('/signin/login', ['mobile' => '13800000001', 'password' => 'test-password', 'captcha' => $this->issueLoginCaptcha()])->assertStatus(401);
     }
 
     public function test_password_change_uses_laravel_validation_and_invalidates_old_sessions(): void
     {
         $this->signIn();
-        $this->postJson('/signin/changepassword', ['password' => 'wrong', 'password1' => 'new-password', 'password2' => 'new-password'])->assertStatus(422);
-        $this->postJson('/signin/changepassword', ['password' => 'test-password', 'password1' => 'new-password', 'password2' => 'new-password'])->assertOk();
+        $this->postJson('/signin/change-password', ['password' => 'wrong', 'password1' => 'new-password', 'password2' => 'new-password'])->assertStatus(422);
+        $this->postJson('/signin/change-password', ['password' => 'test-password', 'password1' => 'new-password', 'password2' => 'new-password'])->assertOk();
         $this->assertTrue(Hash::check('new-password', User::find(1)->password));
-        $this->getJson('/signin/islogin')->assertOk();
+        $this->getJson('/signin/is-login')->assertOk();
         DB::table('user')->where('id', 1)->update(['password' => Hash::make('reset-password')]);
         Auth::forgetGuards();
-        $this->getJson('/signin/islogin')->assertStatus(401);
+        $this->getJson('/signin/is-login')->assertStatus(401);
     }
 
     public function test_csrf_is_required_and_issued_for_the_spa(): void
@@ -104,9 +104,9 @@ class MigrationTest extends TestCase
         // Laravel 默认跳过测试环境 CSRF，这里切换环境以检查实际中间件。
         $this->app['env'] = 'local';
         $this->getJson('/signin/csrf')->assertOk()->assertCookie('XSRF-TOKEN');
-        $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'test-password'])->assertStatus(419);
+        $this->postJson('/signin/login', ['mobile' => '13800000001', 'password' => 'test-password'])->assertStatus(419);
         $captcha = $this->issueLoginCaptcha();
-        $this->withSession(['_token' => 'csrf-test'])->postJson('/signin/dologin', [
+        $this->withSession(['_token' => 'csrf-test'])->postJson('/signin/login', [
             '_token' => 'csrf-test', 'mobile' => '13800000001', 'password' => 'test-password', 'captcha' => $captcha,
         ])->assertOk();
     }
@@ -196,7 +196,7 @@ class MigrationTest extends TestCase
         $initialLevel = DB::transactionLevel();
         DB::beginTransaction();
         try {
-            $this->postJson('/outpatient/updatesituation', ['patientid' => 72, 'kps' => 100, 'cc' => '嵌套事务测试'])
+            $this->postJson('/outpatient/situation', ['patientid' => 72, 'kps' => 100, 'cc' => '嵌套事务测试'])
                 ->assertOk()->assertJsonPath('code', 0);
             $this->assertSame($initialLevel + 1, DB::transactionLevel());
             $this->assertDatabaseHas('situation', ['patientid' => 72, 'cc' => '嵌套事务测试']);
@@ -216,7 +216,7 @@ class MigrationTest extends TestCase
         $this->mock(LogRepository::class, function ($mock): void {
             $mock->shouldReceive('record')->once()->andThrow(new \RuntimeException('模拟日志写入失败'));
         });
-        $this->postJson('/outpatient/updatecheck', [
+        $this->postJson('/outpatient/check', [
             'patientid' => 71, 'treatment' => ['checkday' => '2026-12-14', 'checkalive' => 1],
             'situation' => ['cc' => '回滚测试'], 'video' => ['videoday' => '2026-12-14'],
         ])->assertStatus(500)->assertJsonPath('msg', '请求处理失败，请稍后重试。');
@@ -257,9 +257,9 @@ class MigrationTest extends TestCase
             ['id' => 3, 'realname' => '已删除', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1, 'deleted_at' => '2026-01-01 12:12:12'],
         ]);
         $this->getJson('/outpatient/items?hospitalid=-1')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.items.0.realname', '本院患者');
-        $this->getJson('/outpatient/getpatient?patientid=2')->assertStatus(404);
+        $this->getJson('/outpatient/patient?patientid=2')->assertStatus(404);
         $this->getJson('/doctor/items')->assertStatus(403);
-        $this->postJson('/outpatient/updatepatient', ['realname' => '新增测试患者', 'gender' => 1, 'age' => 40, 'mobile' => '13900000000', 'firstday' => '2026-11-14'])->assertOk()->assertJsonPath('code', 0);
+        $this->postJson('/outpatient/patient', ['realname' => '新增测试患者', 'gender' => 1, 'age' => 40, 'mobile' => '13900000000', 'firstday' => '2026-11-14'])->assertOk()->assertJsonPath('code', 0);
         $this->assertDatabaseHas('patient', ['realname' => '新增测试患者', 'hospitalid' => 1]);
     }
 
@@ -346,43 +346,43 @@ class MigrationTest extends TestCase
     public function test_outpatient_full_record_workflow(): void
     {
         $this->signIn();
-        $response = $this->postJson('/outpatient/updatepatient', ['realname' => '流程门诊患者', 'gender' => 1, 'age' => 40, 'mobile' => '13900000010', 'firstday' => '2026-11-14'])->assertOk()->assertJsonPath('code', 0);
+        $response = $this->postJson('/outpatient/patient', ['realname' => '流程门诊患者', 'gender' => 1, 'age' => 40, 'mobile' => '13900000010', 'firstday' => '2026-11-14'])->assertOk()->assertJsonPath('code', 0);
         $id       = $response->json('data.patientid');
-        $this->postJson('/outpatient/updatesituation', ['patientid' => $id, 'kps' => 100, 'cc' => '测试主诉'])->assertOk()->assertJsonPath('code', 0);
-        $this->postJson('/outpatient/updatevideo', ['patientid' => $id, 'vtype' => 'f', 'cemrilength' => 10, 'cemriwidth' => 8, 'cemrithick' => 6, 'videoday' => '2026-11-14'])->assertOk()->assertJsonPath('code', 0);
+        $this->postJson('/outpatient/situation', ['patientid' => $id, 'kps' => 100, 'cc' => '测试主诉'])->assertOk()->assertJsonPath('code', 0);
+        $this->postJson('/outpatient/video', ['patientid' => $id, 'vtype' => 'f', 'cemrilength' => 10, 'cemriwidth' => 8, 'cemrithick' => 6, 'videoday' => '2026-11-14'])->assertOk()->assertJsonPath('code', 0);
         $this->getJson('/outpatient/homepage?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
-        $this->postJson('/outpatient/updatecheck', [
+        $this->postJson('/outpatient/check', [
             'patientid' => $id, 'treatment' => ['checkday' => '2026-12-14', 'checkalive' => 1],
             'situation' => ['cc' => '复查主诉'], 'video' => ['videoday' => '2026-12-14'],
         ])->assertOk()->assertJsonPath('code', 0);
         $this->assertDatabaseHas('patient', ['id' => $id, 'checkcount' => 1]);
-        $this->getJson('/outpatient/getcheck?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
-        $this->getJson('/outpatient/checkdaylist?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
+        $this->getJson('/outpatient/check?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
+        $this->getJson('/outpatient/check-day-list?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
         $this->get('/outpatient/download?patientid='.$id)->assertOk()->assertHeader('content-type', 'application/vnd.ms-word');
-        $this->deleteJson('/outpatient/delete', ['patientid' => $id])->assertOk();
+        $this->deleteJson('/outpatient/patient', ['patientid' => $id])->assertOk();
         $this->getJson('/outpatient/items')->assertJsonPath('data.total', 0);
     }
 
     public function test_inhospital_surgery_pathology_and_followup_workflow(): void
     {
         $this->signIn();
-        $response = $this->postJson('/inhospital/updatepatient', ['realname' => '流程住院患者', 'gender' => 1, 'age' => 50, 'mobile' => '13900000011', 'hospday' => '2026-11-14', 'hospcode' => 'TEST-001'])->assertOk()->assertJsonPath('code', 0);
+        $response = $this->postJson('/inhospital/patient', ['realname' => '流程住院患者', 'gender' => 1, 'age' => 50, 'mobile' => '13900000011', 'hospday' => '2026-11-14', 'hospcode' => 'TEST-001'])->assertOk()->assertJsonPath('code', 0);
         $id       = $response->json('data.patientid');
-        $this->postJson('/inhospital/updatesituation', ['patientid' => $id, 'comefrom' => 'i', 'kps' => 100, 'cc' => '入院情况'])->assertOk()->assertJsonPath('code', 0);
-        $this->postJson('/inhospital/updatevideo', ['patientid' => $id, 'vtype' => 'b', 'videoday' => '2026-11-14'])->assertOk()->assertJsonPath('code', 0);
-        $this->postJson('/inhospital/updatesurgery', ['patientid' => $id, 'surgeryday' => '2026-11-15', 'surgeryway' => 1])->assertOk()->assertJsonPath('code', 0);
-        $this->postJson('/inhospital/updatepathology', ['patientid' => $id, 'pycode' => 'TEST-PY', 'who' => 65])->assertOk()->assertJsonPath('code', 0);
-        $this->postJson('/inhospital/updatefollowup', [
+        $this->postJson('/inhospital/situation', ['patientid' => $id, 'comefrom' => 'i', 'kps' => 100, 'cc' => '入院情况'])->assertOk()->assertJsonPath('code', 0);
+        $this->postJson('/inhospital/video', ['patientid' => $id, 'vtype' => 'b', 'videoday' => '2026-11-14'])->assertOk()->assertJsonPath('code', 0);
+        $this->postJson('/inhospital/surgery', ['patientid' => $id, 'surgeryday' => '2026-11-15', 'surgeryway' => 1])->assertOk()->assertJsonPath('code', 0);
+        $this->postJson('/inhospital/pathology', ['patientid' => $id, 'pycode' => 'TEST-PY', 'who' => 65])->assertOk()->assertJsonPath('code', 0);
+        $this->postJson('/inhospital/followup', [
             'patientid' => $id, 'treatment' => ['checkday' => '2026-12-15', 'checkalive' => 1],
             'situation' => ['cc' => '随访情况'], 'video' => ['videoday' => '2026-12-15'],
         ])->assertOk()->assertJsonPath('code', 0);
-        $this->getJson('/inhospital/getfollowup?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
+        $this->getJson('/inhospital/followup?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
         $this->getJson('/inhospital/items')->assertOk()->assertJsonPath('data.total', 1);
         $this->getJson('/inhospital/homepage?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
-        $this->getJson('/inhospital/homepagedaylist?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
+        $this->getJson('/inhospital/homepage-day-list?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
         $this->getJson('/inhospital/homepage?patientid='.$id.'&hospseq=999')->assertStatus(418)->assertJsonPath('code', 1);
         DB::table('radiotherapy')->where('patientid', $id)->delete();
-        $this->getJson('/inhospital/followuppage?patientid='.$id)->assertOk()->assertJsonPath('data.radiotherapy', []);
+        $this->getJson('/inhospital/followup-page?patientid='.$id)->assertOk()->assertJsonPath('data.radiotherapy', []);
     }
 
     public function test_another_patients_treatment_cannot_be_read(): void
@@ -390,41 +390,41 @@ class MigrationTest extends TestCase
         $this->signIn();
         $this->insertPatients([['id' => 1, 'hospitalid' => 1], ['id' => 2, 'hospitalid' => 2]]);
         DB::table('treatment')->insert(['id' => 5, 'patientid' => 2]);
-        $this->getJson('/outpatient/getcheck?patientid=1&treatmentid=5')->assertStatus(418)->assertJsonPath('code', 1);
+        $this->getJson('/outpatient/check?patientid=1&treatmentid=5')->assertStatus(418)->assertJsonPath('code', 1);
     }
 
     public function test_form_requests_reject_invalid_fields_before_writing(): void
     {
         $this->signIn();
-        $this->postJson('/outpatient/updatepatient', ['realname' => '参数测试', 'age' => 'invalid'])
+        $this->postJson('/outpatient/patient', ['realname' => '参数测试', 'age' => 'invalid'])
             ->assertStatus(422)->assertJsonValidationErrors('age', 'data.errors');
         $this->assertDatabaseCount('patient', 0);
         $this->insertPatients(['id' => 1, 'hospitalid' => 1]);
-        $this->postJson('/outpatient/updatecheck', ['patientid' => 1, 'video' => 'invalid'])
+        $this->postJson('/outpatient/check', ['patientid' => 1, 'video' => 'invalid'])
             ->assertStatus(422)->assertJsonValidationErrors('video', 'data.errors');
         $this->assertDatabaseCount('treatment', 0);
-        $this->getJson('/outpatient/getpatient?patientid=invalid')->assertStatus(422);
+        $this->getJson('/outpatient/patient?patientid=invalid')->assertStatus(422);
     }
 
     public function test_hospital_and_doctor_management_uses_laravel_services(): void
     {
         $this->signIn();
-        $hospital = $this->postJson('/hospital/update', ['title' => '新增测试医院'])->assertOk()->json('data.hospitalid');
-        $this->postJson('/hospital/update', ['hospitalid' => $hospital, 'title' => '更新测试医院'])->assertOk();
+        $hospital = $this->postJson('/hospital', ['title' => '新增测试医院'])->assertOk()->json('data.hospitalid');
+        $this->postJson('/hospital', ['hospitalid' => $hospital, 'title' => '更新测试医院'])->assertOk();
         $this->assertDatabaseHas('hospital', ['id' => $hospital, 'title' => '更新测试医院']);
         $this->getJson('/hospital/items?'.http_build_query(['title' => '更新测试医院']))->assertOk()->assertJsonPath('data.total', 1);
-        $doctor = $this->postJson('/doctor/update', [
+        $doctor = $this->postJson('/doctor', [
             'realname'    => '新增测试医生', 'mobile' => '13800000002', 'hospitalid' => $hospital,
             'permissions' => ['download.patient' => 'true'],
         ])->assertOk()->assertJsonPath('data.permissions.0', 'download.patient')->json('data.doctorid');
         $this->assertTrue(Hash::check('0000002', User::findOrFail($doctor)->password));
-        $this->postJson('/doctor/resetpassword', ['doctorid' => $doctor])->assertOk();
-        $this->deleteJson('/hospital/delete', ['hospitalid' => $hospital])->assertStatus(418);
-        $this->deleteJson('/doctor/delete', ['doctorid' => $doctor])->assertOk();
+        $this->postJson('/doctor/reset-password', ['doctorid' => $doctor])->assertOk();
+        $this->deleteJson('/hospital', ['hospitalid' => $hospital])->assertStatus(418);
+        $this->deleteJson('/doctor', ['doctorid' => $doctor])->assertOk();
         $this->assertNotNull(DB::table('user')->where('id', $doctor)->whereNotNull('deleted_at')->first());
-        $this->deleteJson('/hospital/delete', ['hospitalid' => $hospital])->assertStatus(418);
-        $emptyHospital = $this->postJson('/hospital/update', ['title' => '待删除测试医院'])->assertOk()->json('data.hospitalid');
-        $this->deleteJson('/hospital/delete', ['hospitalid' => $emptyHospital])->assertOk();
+        $this->deleteJson('/hospital', ['hospitalid' => $hospital])->assertStatus(418);
+        $emptyHospital = $this->postJson('/hospital', ['title' => '待删除测试医院'])->assertOk()->json('data.hospitalid');
+        $this->deleteJson('/hospital', ['hospitalid' => $emptyHospital])->assertOk();
         $this->getJson('/hospital/items?'.http_build_query(['title' => '待删除测试医院']))->assertJsonPath('data.total', 0);
     }
 
@@ -450,9 +450,9 @@ class MigrationTest extends TestCase
         ])->assertOk()->assertJsonPath('data.uid', 'test-upload')->json('data');
         Storage::disk('patient_media')->assertExists(substr($media['fullurl'], strlen('/file/')));
         Storage::disk('patient_media')->assertExists(substr($media['url'], strlen('/file/')));
-        $this->getJson('/inhospital/getmedia?patientid=1')->assertOk()->assertJsonPath('data.0.id', $media['id']);
-        $this->deleteJson('/inhospital/deletemedia', ['patientid' => 1, 'fileid' => $media['id']])->assertOk();
-        $this->getJson('/inhospital/getmedia?patientid=1')->assertJsonPath('data', []);
+        $this->getJson('/inhospital/media?patientid=1')->assertOk()->assertJsonPath('data.0.id', $media['id']);
+        $this->deleteJson('/inhospital/media', ['patientid' => 1, 'fileid' => $media['id']])->assertOk();
+        $this->getJson('/inhospital/media?patientid=1')->assertJsonPath('data', []);
     }
 
     public function test_category_keys_use_ckey_with_chinese_display_titles(): void
@@ -479,7 +479,7 @@ class MigrationTest extends TestCase
             ]);
         }
 
-        $options    = $this->getJson('/globaloptions')->assertOk()->assertJsonPath('code', 0);
+        $options    = $this->getJson('/global-options')->assertOk()->assertJsonPath('code', 0);
         $categories = $this->getJson('/category')->assertOk()->assertJsonPath('code', 0);
         $labels     = app(SystemService::class)->categoriesKV();
         foreach ($groups as [$parentId, $key, $title, $childId, $childTitle, $value]) {
@@ -504,10 +504,10 @@ class MigrationTest extends TestCase
             ['id' => 100, 'parentid' => 0, 'title' => 'testcategory'],
             ['id' => 101, 'parentid' => 100, 'title' => '测试字典项'],
         ]);
-        $this->getJson('/globaloptions')->assertOk()
+        $this->getJson('/global-options')->assertOk()
             ->assertJsonPath('data.opTotal', 1)->assertJsonPath('data.ihTotal', 1)
             ->assertJsonPath('data.categories.testcategory.0.title', '测试字典项');
         $this->getJson('/category')->assertOk()->assertJsonPath('data.testcategory.0.value', 101);
-        $this->getJson('/signin/islogin')->assertOk()->assertJsonPath('data.user.hospital', '测试医院甲');
+        $this->getJson('/signin/is-login')->assertOk()->assertJsonPath('data.user.hospital', '测试医院甲');
     }
 }
