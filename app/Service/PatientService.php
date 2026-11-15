@@ -410,6 +410,7 @@ class PatientService
     /**
      * 复查，术后叫随访，一次随访，记录为一次治疗
      *
+     * @param  array<string,mixed>  $checkdata
      * @return array<string,mixed>
      */
     public function updateCheck(array $checkdata)

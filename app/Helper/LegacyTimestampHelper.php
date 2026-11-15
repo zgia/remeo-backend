@@ -14,7 +14,9 @@ use Illuminate\Support\Carbon;
  */
 final class LegacyTimestampHelper
 {
-    /** 0/1 标记没有可还原的真实时间，统一映射为固定时间。 */
+    /**
+     * 0/1 标记没有可还原的真实时间，统一映射为固定时间。
+     */
     public const FLAG_TIME = '2026-01-01 12:12:12';
 
     public static function toDateTime(mixed $value, ?string $fallback = null): ?string

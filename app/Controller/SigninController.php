@@ -15,7 +15,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Mews\Captcha\Captcha;
 
-/** Laravel 会话认证入口。 */
+/**
+ * Laravel 会话认证入口。
+ */
 class SigninController extends BaseController
 {
     public function __construct(private readonly UserService $userService, private readonly DoctorService $doctorService, private readonly HospitalService $hospitalService) {}
@@ -88,7 +90,10 @@ class SigninController extends BaseController
 
     }
 
-    /** @param array<string,mixed> $user @return array<string,mixed> */
+    /**
+     * @param  array<string,mixed>  $user
+     * @return array<string,mixed>
+     */
     private function getUser(array $user): array
     {
         return [

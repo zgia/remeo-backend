@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Common\CommonConst;
 use App\Models\User;
 use App\Models\UserPermission;
 use App\Repositories\UserPermissionRepository;
@@ -63,8 +64,6 @@ class DoctorService
      */
     public function items(string $realname, int $hospitalid = 0): array
     {
-        $perpage = (int) getOption('perpage', 20);
-
         $conds = [];
         // 搜索
         if ($realname) {
@@ -82,7 +81,7 @@ class DoctorService
             ->leftJoin('hospital', 'user.hospitalid', '=', 'hospital.id')
             ->select(explode(',', $this->doctorFields))
             ->orderBy('user.id', 'desc')
-            ->forPage(currentPage(), $perpage)
+            ->forPage(currentPage(), CommonConst::PAGE_SIZE)
             ->get()
             ->map(fn (User $record): array => $record->getAttributes())
             ->all();

@@ -71,6 +71,7 @@ class LogRepository
     /**
      * 获取日志
      *
+     * @param  array<string,mixed>  $conditions
      * @param  int  $offset  数据偏移量
      * @param  int  $limit  获取数据数量
      * @return array<array<string,mixed>>

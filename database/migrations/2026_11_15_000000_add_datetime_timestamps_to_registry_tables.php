@@ -12,14 +12,18 @@ use Illuminate\Support\Facades\Schema;
 // 旧值语义：0 表示未发生，1 是历史上手工写入的删除标记，其余为 Unix 时间戳。
 return new class extends Migration
 {
-    /** 旧字段 => [新字段, 字段注释] */
+    /**
+     * 旧字段 => [新字段, 字段注释]
+     */
     private const COLUMNS = [
         'createdat' => ['created_at', '创建时间'],
         'updatedat' => ['updated_at', '更新时间'],
         'deletedat' => ['deleted_at', '删除时间'],
     ];
 
-    /** 表 => 该表实际存在的旧时间字段（空数组表示原本没有时间字段） */
+    /**
+     * 表 => 该表实际存在的旧时间字段（空数组表示原本没有时间字段）
+     */
     private const TABLES = [
         'category'       => [],
         'hospday'        => [],
@@ -41,10 +45,14 @@ return new class extends Migration
         'video'          => ['createdat', 'updatedat', 'deletedat'],
     ];
 
-    /** 每张表都要有的 Laravel 时间字段 */
+    /**
+     * 每张表都要有的 Laravel 时间字段
+     */
     private const TIMESTAMPS = ['created_at' => '创建时间', 'updated_at' => '更新时间'];
 
-    /** 0/1 标记没有可还原的真实时间，统一映射为固定时间。 */
+    /**
+     * 0/1 标记没有可还原的真实时间，统一映射为固定时间。
+     */
     private const LEGACY_FLAG_TIME = '2026-01-01 12:12:12';
 
     public function up(): void
@@ -137,7 +145,9 @@ return new class extends Migration
         });
     }
 
-    /** 按 ID 分块回填，避免大表一次性载入内存。 */
+    /**
+     * 按 ID 分块回填，避免大表一次性载入内存。
+     */
     private function backfill(string $table, string $legacyColumn, string $column): void
     {
         if (! Schema::hasColumn($table, $legacyColumn)) {

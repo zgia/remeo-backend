@@ -6,7 +6,9 @@ namespace App\Controller;
 
 use Illuminate\Http\JsonResponse;
 
-/** 统一响应格式，保留前端 code/msg/data 契约。 */
+/**
+ * 统一响应格式，保留前端 code/msg/data 契约。
+ */
 abstract class BaseController
 {
     /**

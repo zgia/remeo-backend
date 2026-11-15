@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Helper;
 
-/** 影像附件缩略图，非图片附件不生成缩略图。 */
+/**
+ * 影像附件缩略图，非图片附件不生成缩略图。
+ */
 class ImageHelper
 {
-    /** @param string $file @param int $width @param int $height @param string $directory @return bool */
     public static function thumb(string $file, int $width, int $height, string $directory): bool
     {
         $info = @getimagesize($file);

@@ -27,6 +27,15 @@ php vendor/bin/pint --test app routes
 
 测试强制使用 SQLite `:memory:`，逐次创建测试表，不连接业务库、不执行数据库重置命令。
 
+`new_remeo` 等真实库的数据形态（软删除的医生/医院、空字符串、NULL 日期）由只读冒烟覆盖。命令复用真实路由与中间件，只发送 GET，整轮包在一个事务里并回滚：
+
+```bash
+php artisan remeo:smoke            # 断言组出现 5xx 或 Warning 日志时退出码非 0
+php artisan remeo:smoke --strict   # 边界探测组的发现也计为失败
+```
+
+默认使用账号 3（`SUPER_USERS` 中的开发账号），可用 `--user` 指定；production 环境默认拒绝执行，需要显式 `--force`。
+
 ## 架构
 
 - `routes/web.php`：业务接口沿用原路径，统一使用 Laravel 会话及 CSRF 中间件；分组规则见下文。

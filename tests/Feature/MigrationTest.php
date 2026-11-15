@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Common\CommonConst;
 use App\Enums\SituationType;
 use App\Helper\AliyunSmsHelper;
 use App\Models\User;
@@ -23,7 +24,9 @@ use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
-/** 覆盖框架替换后最易回归的认证、权限和查询契约。 */
+/**
+ * 覆盖框架替换后最易回归的认证、权限和查询契约。
+ */
 class MigrationTest extends TestCase
 {
     protected function setUp(): void
@@ -38,7 +41,9 @@ class MigrationTest extends TestCase
         ]);
     }
 
-    /** @param array<mixed> $rows @return void */
+    /**
+     * @param  array<mixed>  $rows
+     */
     private function insertPatients(array $rows): void
     {
         if (isset($rows['id'])) {
@@ -49,7 +54,6 @@ class MigrationTest extends TestCase
         }
     }
 
-    /** @param int $id @return void */
     private function signIn(int $id = 1): void
     {
         $user = User::findOrFail($id);
@@ -110,7 +114,7 @@ class MigrationTest extends TestCase
     public function test_native_queries_preserve_pagination_counts_joins_and_rollback(): void
     {
         $this->signIn();
-        config(['remeo.options.perpage.value' => 1]);
+
         $this->insertPatients([
             ['id' => 11, 'realname' => '患者甲', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1],
             ['id' => 22, 'realname' => '患者乙', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1],
@@ -119,12 +123,13 @@ class MigrationTest extends TestCase
         ]);
         DB::table('progress')->insert(['patientid' => 22, 'firstsituation' => 1]);
         $this->getJson('/outpatient/items?realname='.urlencode('患者'))
-            ->assertOk()->assertJsonPath('data.total', 2)->assertJsonCount(1, 'data.items')
+            ->assertOk()->assertJsonPath('data.total', 2)->assertJsonCount(2, 'data.items')
             ->assertJsonPath('data.items.0.patientid', 22)
             ->assertJsonPath('data.items.0.hospital', '测试医院甲')
             ->assertJsonPath('data.items.0.recorder', '测试医生')
             ->assertJsonPath('data.items.0.progress.firstsituation', true);
-        $this->getJson('/outpatient/items?p=2')->assertJsonPath('data.items.0.patientid', 11);
+        // 两条记录都在第一页，超出范围的页码返回空列表而不是报错。
+        $this->getJson('/outpatient/items?p=2')->assertJsonPath('data.total', 2)->assertJsonCount(0, 'data.items');
         $this->getJson('/outpatient/items?sort=id&order=ascending')->assertJsonPath('data.items.0.patientid', 11);
         $this->getJson('/outpatient/items?realname=missing')->assertJsonPath('data.total', 0)->assertJsonPath('data.items', []);
         $hospitals = app(HospitalService::class)->items('测试医院甲');
@@ -136,6 +141,28 @@ class MigrationTest extends TestCase
         $this->assertDatabaseHas('patient', ['id' => 11, 'checkcount' => 1]);
         DB::rollBack();
         $this->assertDatabaseHas('patient', ['id' => 11, 'checkcount' => 0]);
+    }
+
+    public function test_items_paginate_with_fixed_page_size(): void
+    {
+        $this->signIn();
+
+        $rows = [];
+        for ($i = 1; $i <= CommonConst::PAGE_SIZE + 1; $i++) {
+            $rows[] = ['id' => 200 + $i, 'realname' => '分页患者', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1];
+        }
+        $this->insertPatients($rows);
+
+        $this->getJson('/outpatient/items?realname='.urlencode('分页患者'))
+            ->assertOk()
+            ->assertJsonPath('data.total', CommonConst::PAGE_SIZE + 1)
+            ->assertJsonCount(CommonConst::PAGE_SIZE, 'data.items')
+            ->assertJsonPath('data.items.0.patientid', 200 + CommonConst::PAGE_SIZE + 1);
+
+        $this->getJson('/outpatient/items?realname='.urlencode('分页患者').'&p=2')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.patientid', 201);
     }
 
     public function test_repository_business_queries_and_json_storage_preserve_contracts(): void

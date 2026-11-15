@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Common\CommonConst;
 use App\Service\PatientService;
 use App\Service\SystemService;
 use Illuminate\Http\JsonResponse;
@@ -41,7 +42,7 @@ class IndexController extends BaseController
         $data = [
             'categories' => $categories,
             'options'    => $options,
-            'perpage'    => (int) getOption('perpage', 20),
+            'perpage'    => CommonConst::PAGE_SIZE,
             'opTotal'    => $patients[1] ?? 0,
             'ihTotal'    => $patients[0] ?? 0,
         ];

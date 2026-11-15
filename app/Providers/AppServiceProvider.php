@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
-/** 应用服务注册。 */
+/**
+ * 应用服务注册。
+ */
 class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void

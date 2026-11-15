@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Common\CommonConst;
 use App\Exception\BusinessException;
 use App\Models\Hospital;
 use App\Models\Patient;
@@ -43,8 +44,6 @@ class HospitalService
      */
     public function items(string $title)
     {
-        $perpage = (int) getOption('perpage', 20);
-
         $conds = [];
         // 搜索
         if ($title) {
@@ -57,7 +56,7 @@ class HospitalService
             ->where($conds)
             ->select('id AS hospitalid', 'title')
             ->orderBy('id', 'desc')
-            ->forPage(currentPage(), $perpage)
+            ->forPage(currentPage(), CommonConst::PAGE_SIZE)
             ->get()
             ->map(fn (Hospital $record): array => $record->getAttributes())
             ->all();

@@ -6,7 +6,9 @@ namespace App\Http\Requests;
 
 class InhospitalUpdateInitialStateRequest extends RegistryRequest
 {
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     protected function defaults(): array
     {
         return [
@@ -15,7 +17,9 @@ class InhospitalUpdateInitialStateRequest extends RegistryRequest
         ];
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public function rules(): array
     {
         return [

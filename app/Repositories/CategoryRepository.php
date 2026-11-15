@@ -8,7 +8,9 @@ use App\Models\Category;
 
 class CategoryRepository
 {
-    /** @return array<int,array<string,mixed>> */
+    /**
+     * @return array<int,array<string,mixed>>
+     */
     public function ordered(): array
     {
         return Category::query()

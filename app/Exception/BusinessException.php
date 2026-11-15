@@ -4,18 +4,27 @@ declare(strict_types=1);
 
 namespace App\Exception;
 
-/** 携带业务定位信息的异常。 */
+/**
+ * 携带业务定位信息的异常。
+ */
 class BusinessException extends \RuntimeException
 {
+    /**
+     * @var array<string,mixed>
+     */
     private array $more = [];
 
-    /** @param array<string,mixed> $more @return void */
+    /**
+     * @param  array<string,mixed>  $more
+     */
     public function setMore(array $more = []): void
     {
         $this->more = $more;
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public function getMore(): array
     {
         return $this->more;

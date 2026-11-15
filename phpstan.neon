@@ -30,23 +30,23 @@ parameters:
     # 忽略常见 Laravel 动态方法误报
     ignoreErrors:
         # 泛型未指定（Paginator / Collection / Builder / Trait）
-        - identifier: missingType.generics
+        # - identifier: missingType.generics
 
         # 方法参数 / 返回值未声明类型
-        - identifier: missingType.parameter
-        - identifier: missingType.return
-        - identifier: missingType.property
-        - identifier: missingType.iterableValue
+        # - identifier: missingType.parameter
+        # - identifier: missingType.return
+        # - identifier: missingType.property
+        # - identifier: missingType.iterableValue
 
         # 使用泛型 trait
-        - identifier: generics.notSubtype
-        - identifier: generics.missingTypehint
+        # - identifier: generics.notSubtype
+        # - identifier: generics.missingTypehint
 
         # Eloquent where / scope（Laravel 动态方法）
-        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
-        - '#Call to an undefined method Illuminate\\Database\\Query\\Builder#'
-        - '#Static call to instance method Illuminate\\Support\\Facades#'
-        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model#'
-        - '#Access to an undefined property App\\Http\\Resources\\#'
-        - '#Using nullsafe property access.*is unnecessary\. Use -> instead\.#'
-        - '#Call to an undefined method Spatie\\QueryBuilder\\QueryBuilder#'
+        # - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+        # - '#Call to an undefined method Illuminate\\Database\\Query\\Builder#'
+        # - '#Static call to instance method Illuminate\\Support\\Facades#'
+        # - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model#'
+        # - '#Access to an undefined property App\\Http\\Resources\\#'
+        # - '#Using nullsafe property access.*is unnecessary\. Use -> instead\.#'
+        # - '#Call to an undefined method Spatie\\QueryBuilder\\QueryBuilder#'

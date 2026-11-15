@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Common\CommonConst;
 use App\Enums\ConstantType;
 use App\Enums\SituationType;
 use App\Enums\SurgeryType;
@@ -118,8 +119,6 @@ class InhospitalService extends PatientService
      */
     public function items(string $realname, int $hospitalid = 0, string $sort = '', string $order = '')
     {
-        $perpage = (int) getOption('perpage', 20);
-
         // 处理当前医院所有医生的住院患者
         $conds = ['patient.isin' => 1, 'patient.'.$this->deleteTag => 0];
 
@@ -154,7 +153,7 @@ class InhospitalService extends PatientService
             ->leftJoin('progress', 'progress.patientid', '=', 'patient.id')
             ->select('patient.*', 'patient.id AS patientid', 'hospsituation', 'surgery', 'vbs', 'vas', 'pathology', 'discharge')
             ->orderBy($sort && $order ? 'patient.'.$sort : 'patient.id', $sort && $order ? $order : 'desc')
-            ->forPage(currentPage(), $perpage)
+            ->forPage(currentPage(), CommonConst::PAGE_SIZE)
             ->get()
             ->keyBy('id')
             ->map(fn (Patient $record): array => $record->getAttributes())
@@ -857,6 +856,7 @@ class InhospitalService extends PatientService
     /**
      * 随访：基本情况，患者情况，影像学检查，放疗
      *
+     * @param  array<string,mixed>  $checkdata
      * @return array<string,mixed>
      */
     public function updateFollowup(array $checkdata)

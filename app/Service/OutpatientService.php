@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Common\CommonConst;
 use App\Enums\ConstantType;
 use App\Enums\SituationType;
 use App\Enums\VideoType;
@@ -106,8 +107,6 @@ class OutpatientService extends PatientService
      */
     public function items(string $realname, int $hospitalid = 0, string $sort = '', string $order = '')
     {
-        $perpage = (int) getOption('perpage', 20);
-
         // 处理当前医院所有医生的患者
         $conds = [
             'patient.isout'             => yes(),
@@ -140,7 +139,7 @@ class OutpatientService extends PatientService
             ->leftJoin('progress', 'progress.patientid', '=', 'patient.id')
             ->select('patient.*', 'patient.id AS patientid', 'firstsituation', 'firstvideo')
             ->orderBy($sort && $order ? 'patient.'.$sort : 'patient.id', $sort && $order ? $order : 'desc')
-            ->forPage(currentPage(), $perpage)
+            ->forPage(currentPage(), CommonConst::PAGE_SIZE)
             ->get()
             ->keyBy('id')
             ->map(fn (Patient $record): array => $record->getAttributes())

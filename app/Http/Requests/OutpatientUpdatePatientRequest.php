@@ -6,7 +6,9 @@ namespace App\Http\Requests;
 
 class OutpatientUpdatePatientRequest extends RegistryRequest
 {
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     protected function defaults(): array
     {
         return [
@@ -27,7 +29,9 @@ class OutpatientUpdatePatientRequest extends RegistryRequest
         ];
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public function rules(): array
     {
         return [

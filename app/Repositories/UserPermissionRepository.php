@@ -8,7 +8,9 @@ use App\Models\UserPermission;
 
 class UserPermissionRepository
 {
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function codesForDoctor(int $doctorid): array
     {
         return UserPermission::query()

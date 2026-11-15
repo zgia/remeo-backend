@@ -7,10 +7,14 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
 
-/** 保留旧表的缺省字段，避免未提交的字段在迁移后变成 SQL NULL。 */
+/**
+ * 保留旧表的缺省字段，避免未提交的字段在迁移后变成 SQL NULL。
+ */
 abstract class RegistryRequest extends FormRequest
 {
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     abstract protected function defaults(): array;
 
     public function authorize(): bool

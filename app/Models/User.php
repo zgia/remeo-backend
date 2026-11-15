@@ -7,7 +7,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-/** 使用既有医生表，由 Laravel 管理身份。 */
+/**
+ * 使用既有医生表，由 Laravel 管理身份。
+ */
 class User extends Authenticatable
 {
     use SoftDeletes;

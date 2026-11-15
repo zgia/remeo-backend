@@ -8,10 +8,6 @@ return [
     ],
     'sms_url' => env('ALIYUN_SMS_URL', 'http://127.0.0.1:7890/'),
     'options' => [
-        'perpage' => [
-            'value' => 20,
-            'desc'  => '每页显示数据',
-        ],
         'pwdminlen' => [
             'value' => 6,
             'desc'  => '密码最小长度',

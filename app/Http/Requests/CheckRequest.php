@@ -25,7 +25,9 @@ class CheckRequest extends RegistryRequest
         parent::prepareForValidation();
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     protected function defaults(): array
     {
         return [
@@ -63,7 +65,9 @@ class CheckRequest extends RegistryRequest
         ];
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public function rules(): array
     {
         return [

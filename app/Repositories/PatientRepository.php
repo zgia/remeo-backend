@@ -8,7 +8,9 @@ use App\Models\Patient;
 
 class PatientRepository
 {
-    /** @return array<int,int> */
+    /**
+     * @return array<int,int>
+     */
     public function countByTypeForHospital(int $hospitalid): array
     {
         return Patient::query()

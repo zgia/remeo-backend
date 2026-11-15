@@ -9,10 +9,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-/** 密码被管理员或短信重置后，已有会话必须重新认证。 */
+/**
+ * 密码被管理员或短信重置后，已有会话必须重新认证。
+ */
 class VerifySessionPassword
 {
-    /** @param Request $request @param Closure $next @return Response */
     public function handle(Request $request, Closure $next): Response
     {
         $password = $request->session()->get('auth_password');

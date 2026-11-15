@@ -6,7 +6,9 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-/** 接口校验，沿用手机号和原字段名称。 */
+/**
+ * 接口校验，沿用手机号和原字段名称。
+ */
 class LoginRequest extends FormRequest
 {
     public function authorize(): bool
@@ -14,7 +16,9 @@ class LoginRequest extends FormRequest
         return true;
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * @return array<string,mixed>
+     */
     public function rules(): array
     {
         return [
@@ -24,7 +28,9 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /** @return array<string,string> */
+    /**
+     * @return array<string,string>
+     */
     public function messages(): array
     {
         return [
