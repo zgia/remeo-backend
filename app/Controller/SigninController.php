@@ -43,7 +43,7 @@ class SigninController extends BaseController
 
     public function islogin(): JsonResponse
     {
-        return $this->success('登录有效', ['user' => $this->getUser(UserService::user())]);
+        return $this->success('欢迎', ['user' => $this->getUser(UserService::user())]);
     }
 
     public function logout(): JsonResponse

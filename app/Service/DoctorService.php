@@ -65,7 +65,7 @@ class DoctorService
     {
         $perpage = (int) getOption('perpage', 20);
 
-        $conds = ['user.deletedat' => 0];
+        $conds = [];
         // 搜索
         if ($realname) {
             $conds[] = ['user.realname', 'LIKE', '%'.$realname.'%'];
@@ -89,7 +89,6 @@ class DoctorService
 
         $userPermissions = UserPermission::query()
             ->whereIn('userpermission.doctorid', array_column($hs, 'doctorid'))
-            ->where('userpermission.deletedat', 0)
             ->select('doctorid', 'permissioncode')
             ->get()
             ->map(fn (UserPermission $record): array => $record->getAttributes())
@@ -113,7 +112,6 @@ class DoctorService
     {
         $doctor = User::query()
             ->where('user.id', $doctorid)
-            ->where('user.deletedat', 0)
             ->leftJoin('hospital', 'user.hospitalid', '=', 'hospital.id')
             ->select(explode(',', $this->doctorFields))
             ->first();
@@ -138,14 +136,14 @@ class DoctorService
 
             // 新增医生须先获得真实 ID，再将权限写入同一事务。
             $doctorid = $this->userService->saveUser($doctor);
-            UserPermission::query()->where('userpermission.doctorid', $doctorid)->update(['deletedat' => timenow()]);
+            UserPermission::query()->where('userpermission.doctorid', $doctorid)->delete();
             foreach ($permissions as $code => $value) {
                 if (in_array($value, [true, 1, '1', 'true'], true)) {
                     UserPermission::query()->insert([
                         'doctorid'       => $doctorid,
                         'permissioncode' => $code,
-                        'createdat'      => timenow(),
-                        'updatedat'      => timenow(),
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
                     ]);
                 }
             }
@@ -159,7 +157,7 @@ class DoctorService
      */
     public function delete(int $doctorid): void
     {
-        User::query()->where('user.id', $doctorid)->update(['deletedat' => timenow()]);
+        User::query()->where('user.id', $doctorid)->delete();
     }
 
     /**
@@ -173,8 +171,8 @@ class DoctorService
         User::query()
             ->where('user.id', $doctorid)
             ->update([
-                'password'  => UserService::getInitPassword($doctor['mobile'], $doctor['salt']),
-                'updatedat' => timenow(),
+                'password'   => UserService::getInitPassword($doctor['mobile'], $doctor['salt']),
+                'updated_at' => now(),
             ]);
     }
 }

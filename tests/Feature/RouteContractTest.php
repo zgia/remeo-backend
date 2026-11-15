@@ -123,13 +123,13 @@ class RouteContractTest extends TestCase
             'GET /category'               => [[], ['data.route_category.0.title' => '路由测试字典项'], []],
             'GET /globaloptions'          => [[], ['data.opTotal' => 1, 'data.ihTotal' => 1], []],
             'GET /operator'               => [[], ['data.operator' => true, 'data.candownload' => true], []],
-            'POST /upload'                => [['patientid' => 102, 'uid' => 'route-upload'], ['data.uid' => 'route-upload'], ['media' => ['patientid' => 102, 'deletedat' => 0]]],
+            'POST /upload'                => [['patientid' => 102, 'uid' => 'route-upload'], ['data.uid' => 'route-upload'], ['media' => ['patientid' => 102]]],
             'GET /hospital/all'           => [[], ['data.0.hospitalid' => 2], []],
             'GET /hospital/items'         => [['title' => '路由测试医院'], ['data.total' => 1, 'data.items.0.title' => '路由测试医院'], []],
             'POST /hospital/update'       => [['hospitalid' => 2, 'title' => '路由更新医院'], ['data.title' => '路由更新医院'], ['hospital' => ['id' => 2, 'title' => '路由更新医院']]],
             'DELETE /hospital/delete'     => [['hospitalid' => 2], ['data.hospitalid' => 2], []],
             'GET /doctor/items'           => [['title' => '路由测试医生2'], ['data.total' => 1, 'data.items.0.doctorid' => 2], []],
-            'POST /doctor/update'         => [['doctorid' => 2, 'realname' => '路由更新医生', 'mobile' => '13800000002', 'hospitalid' => 1, 'permissions' => ['download.patient' => 'true']], ['data.realname' => '路由更新医生', 'data.permissions.0' => 'download.patient'], ['user' => ['id' => 2, 'realname' => '路由更新医生'], 'userpermission' => ['doctorid' => 2, 'permissioncode' => 'download.patient', 'deletedat' => 0]]],
+            'POST /doctor/update'         => [['doctorid' => 2, 'realname' => '路由更新医生', 'mobile' => '13800000002', 'hospitalid' => 1, 'permissions' => ['download.patient' => 'true']], ['data.realname' => '路由更新医生', 'data.permissions.0' => 'download.patient'], ['user' => ['id' => 2, 'realname' => '路由更新医生'], 'userpermission' => ['doctorid' => 2, 'permissioncode' => 'download.patient']]],
             'POST /doctor/resetpassword'  => [['doctorid' => 2], ['data.doctorid' => 2], []],
             'DELETE /doctor/delete'       => [['doctorid' => 2], ['data.doctorid' => 2], []],
         ];
@@ -225,7 +225,7 @@ class RouteContractTest extends TestCase
             $parameters['captcha'] = $this->issueLoginCaptcha();
         }
         if ($uri === '/signin/resetpassword') {
-            DB::table('smscode')->insert(['userid' => 1, 'mobile' => '13800000001', 'smscode' => '123456', 'createdat' => time(), 'smsday' => date('Ymd')]);
+            DB::table('smscode')->insert(['userid' => 1, 'mobile' => '13800000001', 'smscode' => '123456', 'created_at' => now(), 'updated_at' => now(), 'smsday' => date('Ymd')]);
         }
         if ($uri === '/upload') {
             $parameters['file'] = UploadedFile::fake()->image('路由上传.png', 300, 200);
@@ -268,7 +268,7 @@ class RouteContractTest extends TestCase
         };
         if ($deleted !== null) {
             [$table, $id] = $deleted;
-            $this->assertGreaterThan(0, DB::table($table)->where('id', $id)->value('deletedat'));
+            $this->assertNotNull(DB::table($table)->where('id', $id)->value('deleted_at'));
         }
         if ($uri === '/signin/dologin' || $uri === '/signin/changepassword') {
             $this->assertAuthenticatedAs(User::findOrFail(1));

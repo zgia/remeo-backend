@@ -38,6 +38,7 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
         $connection = DB::connection();
         if ($connection->getDriverName() === 'sqlite' && $connection->getDatabaseName() === ':memory:') {
             (require database_path('migrations/2026_11_14_000000_create_registry_tables.php'))->up();
+            (require database_path('migrations/2026_11_15_000000_add_datetime_timestamps_to_registry_tables.php'))->up();
         } elseif ($connection->getDriverName() === 'mysql') {
             $expectedDatabase = getenv('REMEO_MYSQL_TEST_DATABASE');
             if (! $expectedDatabase || $connection->getDatabaseName() !== $expectedDatabase) {

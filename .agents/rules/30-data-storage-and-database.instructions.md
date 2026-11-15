@@ -10,7 +10,7 @@ applyTo: "{app/**/*.php,config/**/*.php,database/migrations/**/*.php}"
 - 原本就是完整外部 URL 的值按其外部协议处理。
 - 上传入口必须在可信边界校验文件大小和允许类型；可行时同时校验扩展名、MIME 和实际对象元数据。
 - 大文件、导出和图片处理优先采用流式或分块方案，并明确内存边界。
-- 优先复用 `app/Functions`、`app/Support` 和现有文件 Service。
+- 优先复用 `app/Function/functions.php`、`app/Helper/` 和现有文件 Service。
 
 ## EXTERNAL INTEGRATIONS
 
@@ -23,10 +23,9 @@ applyTo: "{app/**/*.php,config/**/*.php,database/migrations/**/*.php}"
 ## DATABASE
 
 - 已部署 Migration 视为不可变事实；修改生产结构必须新增 Migration。
-- 新建业务实体表默认使用自增 bigint 主键和项目既有表名规则。
+- 新建业务表沿用现有主键约定：`$table->increments('id')`（int unsigned 自增），表名为小写单数（如 `patient`、`smslog`）。
 - 字段的 `nullable`、默认值和类型必须表达真实领域语义。
 - `NULL` 表示未知、未发生、无上限或不适用时必须保留该语义。
-- 内部金额字段使用货币最小单位整数。
 - 使用 `change()` 修改已有字段时，必须完整声明需要保留的长度、默认值、nullable、unsigned、注释等属性。
 - 新建或修改业务表时，为表和业务字段添加准确注释。
 - 新增索引必须有真实查询或唯一性约束依据。

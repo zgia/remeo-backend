@@ -79,7 +79,6 @@ class InhospitalService extends PatientService
      * 下次随访时间: 若组织病理的WHO分级为I级则为术后1年，若组织病理为2-3级则为术后半年
      * WHO分级未65，表示I级别，其他值（66,67）为II，III级
      *
-     *
      * @return int
      */
     public function getNextDayInterval(int $who)
@@ -103,7 +102,7 @@ class InhospitalService extends PatientService
         $patient = [
             'lastfollowupday' => $day,
             'nextfollowupday' => $nextfollowupday,
-            'updatedat'       => timenow(),
+            'updated_at'      => now(),
         ];
 
         Patient::query()->where('patient.id', $patientid)->where('patient.hospitalid', currentHospitalId())->update($patient);
@@ -115,7 +114,6 @@ class InhospitalService extends PatientService
     /**
      * 门诊患者列表
      *
-     *
      * @return array<string,mixed>
      */
     public function items(string $realname, int $hospitalid = 0, string $sort = '', string $order = '')
@@ -123,7 +121,7 @@ class InhospitalService extends PatientService
         $perpage = (int) getOption('perpage', 20);
 
         // 处理当前医院所有医生的住院患者
-        $conds = ['patient.isin' => 1, 'patient.'.$this->deleteTag => 0, 'patient.deletedat' => 0];
+        $conds = ['patient.isin' => 1, 'patient.'.$this->deleteTag => 0];
 
         // -1表示来查看其他医院的患者
         if ($hospitalid == -1 && isViewer(UserService::user())) {
@@ -164,25 +162,28 @@ class InhospitalService extends PatientService
 
         $doctorids = array_unique(array_column($ps, 'doctorid'));
         $doctors   = User::query()
+            ->withTrashed()
             ->whereIn('user.id', $doctorids)
-            ->where('user.deletedat', 0)
-            ->select('user.*')
-            ->pluck('realname', 'id')
+            ->get()
+            ->keyBy('id')
             ->all();
 
         $hospitalids = array_unique(array_column($ps, 'hospitalid'));
         $hospitals   = Hospital::query()
+            ->withTrashed()
             ->whereIn('hospital.id', $hospitalids)
-            ->where('hospital.deletedat', 0)
-            ->select('hospital.*')
-            ->pluck('title', 'id')
+            ->get()
+            ->keyBy('id')
             ->all();
 
         $patients = [];
         foreach ($ps as $p) {
+            $hospital = $hospitals[$p['hospitalid']] ?? null;
+            $doctor   = $doctors[$p['doctorid']]     ?? null;
+
             $patients[] = [
                 'patientid'        => $p['patientid'],
-                'hospital'         => $hospitals[$p['hospitalid']],
+                'hospital'         => $hospital ? ($hospital['title'].($hospital['deleted_at'] !== null ? '(已删除)' : '')) : '',
                 'realname'         => $p['realname'],
                 'age'              => static::getAgeFromIdcard($p['idcard']) ?: $p['age'],
                 'hospcode'         => $p['hospcode'],
@@ -190,19 +191,19 @@ class InhospitalService extends PatientService
                 'hospday'          => $p['hospday'],
                 'hospinitialstate' => static::getInitialStateTitle($p['hospinitialstate']),
                 'progress'         => [
-                    'hospsituation' => $p['hospsituation'] == 1,
-                    'surgery'       => $p['surgery']       == 1,
-                    'vbs'           => $p['vbs']           == 1,
-                    'vas'           => $p['vas']           == 1,
-                    'pathology'     => $p['pathology']     == 1,
-                    'discharge'     => $p['discharge']     == 1,
+                    'hospsituation' => $p['hospsituation'] == yes(),
+                    'surgery'       => $p['surgery']       == yes(),
+                    'vbs'           => $p['vbs']           == yes(),
+                    'vas'           => $p['vas']           == yes(),
+                    'pathology'     => $p['pathology']     == yes(),
+                    'discharge'     => $p['discharge']     == yes(),
                 ],
                 'recurrence'      => $p['recurrence'],
                 'isalive'         => $p['isalive'],
                 'followupcount'   => $p['followupcount'],
                 'nextfollowupday' => $p['nextfollowupday'],
                 'lastfollowupday' => $p['lastfollowupday'],
-                'recorder'        => $doctors[$p['doctorid']],
+                'recorder'        => $doctor ? ($doctor['realname'].($doctor['deleted_at'] !== null ? '(已删除)' : '')) : '',
                 'isfemale'        => isFemale($p['gender']),
             ];
         }
@@ -222,7 +223,6 @@ class InhospitalService extends PatientService
         $hospcode = Patient::query()
             ->where('patient.hospitalid', currentHospitalId())
             ->where('patient.hospcode', $patient['hospcode'])
-            ->where('patient.deletedat', 0)
             ->count();
         if ($hospcode) {
             throw new PatientException('住院号（'.$patient['hospcode'].'）已经存在。');
@@ -231,7 +231,6 @@ class InhospitalService extends PatientService
         $ps = Patient::query()
             ->where('patient.hospitalid', currentHospitalId())
             ->where('patient.realname', 'LIKE', $patient['realname'].'%')
-            ->where('patient.deletedat', 0)
             ->select('id', 'idcard', 'realname', 'mobile', 'mobile2', 'mobile3')
             ->get()
             ->keyBy('id')
@@ -272,8 +271,8 @@ class InhospitalService extends PatientService
             // 有相同患者，但是未住院，即门诊患者，则标记住院
             if ($patientid) {
                 // 第一次住院
-                $patient['hospseq']   = 1;
-                $patient['updatedat'] = timenow();
+                $patient['hospseq']    = 1;
+                $patient['updated_at'] = now();
 
                 Patient::query()
                     ->where('patient.id', $patientid)
@@ -286,7 +285,8 @@ class InhospitalService extends PatientService
                 $patient['hospseq']    = 1;
                 $patient['doctorid']   = currentUserId();
                 $patient['hospitalid'] = currentHospitalId();
-                $patient['createdat']  = timenow();
+                $patient['created_at'] = now();
+                $patient['updated_at'] = now();
 
                 $patient['patientid'] = Patient::query()->insertGetId($patient);
             }
@@ -322,7 +322,6 @@ class InhospitalService extends PatientService
             ->where('patient.hospitalid', currentHospitalId())
             ->where('patient.hospcode', $patient['hospcode'])
             ->where('patient.id', '!=', $patientid)
-            ->where('patient.deletedat', 0)
             ->count();
         if ($hospcode) {
             throw new PatientException('住院号（'.$patient['hospcode'].'）已经存在。');
@@ -334,7 +333,6 @@ class InhospitalService extends PatientService
                 ->where('patient.hospitalid', currentHospitalId())
                 ->where('patient.idcard', $patient['idcard'])
                 ->where('patient.id', '!=', $patientid)
-                ->where('patient.deletedat', 0)
                 ->select('realname')
                 ->first();
             $p = $p?->getAttributes();
@@ -344,7 +342,7 @@ class InhospitalService extends PatientService
             }
         }
 
-        $patient['updatedat'] = timenow();
+        $patient['updated_at'] = now();
 
         Patient::query()->where('patient.id', $patientid)->update($patient);
 
@@ -400,7 +398,13 @@ class InhospitalService extends PatientService
 
             // 记录上次住院时间
             Hospday::query()
-                ->insert(['patientid' => $patientid, 'hospseq' => (int) $patient['hospseq'], 'inday' => $patient['hospday']]);
+                ->insert([
+                    'patientid'  => $patientid,
+                    'hospseq'    => (int) $patient['hospseq'],
+                    'inday'      => $patient['hospday'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
 
             // 2.3）完整度清空，即6个按钮变灰，可以再次添加信息
             Progress::query()->where('progress.patientid', $patientid)->update([
@@ -437,7 +441,6 @@ class InhospitalService extends PatientService
         $hospcode = Patient::query()
             ->where('patient.hospcode', $patient['hospcode'])
             ->where('patient.hospitalid', currentHospitalId())
-            ->where('patient.deletedat', 0)
             ->count();
         if ($hospcode) {
             throw new PatientException('住院号（'.$hospcode.'）已经存在。');
@@ -491,14 +494,15 @@ class InhospitalService extends PatientService
                     $old    = $this->getSurgery($sytype);
 
                     if ($old) {
-                        $sy['updatedat'] = timenow();
-                        $sy['patientid'] = $patientid;
+                        $sy['updated_at'] = now();
+                        $sy['patientid']  = $patientid;
                         Surgery::query()->where('surgery.id', $old['id'])->update($sy);
                     } else {
-                        $sy['sytype']    = $sytype;
-                        $sy['patientid'] = $patientid;
-                        $sy['hospseq']   = $patient['hospseq'];
-                        $sy['createdat'] = timenow();
+                        $sy['sytype']     = $sytype;
+                        $sy['patientid']  = $patientid;
+                        $sy['hospseq']    = $patient['hospseq'];
+                        $sy['created_at'] = now();
+                        $sy['updated_at'] = now();
 
                         Surgery::query()->insert($sy);
                     }
@@ -540,7 +544,6 @@ class InhospitalService extends PatientService
             ->where('surgery.patientid', $patient['patientid'])
             ->whereIn('surgery.sytype', array_keys($types))
             ->where('surgery.hospseq', $patient['hospseq'])
-            ->where('surgery.deletedat', 0)
             ->select(explode(',', 'sytype,'.$this->surgeryFields))
             ->get()
             ->map(fn (Surgery $record): array => $record->getAttributes())
@@ -586,7 +589,6 @@ class InhospitalService extends PatientService
             ->where('situation.patientid', $patientid)
             ->where('situation.stype', $stype)
             ->where('situation.hospseq', $patient['hospseq'])
-            ->where('situation.deletedat', 0)
             ->select('situation.*')
             ->first();
         $old = $old?->getAttributes();
@@ -601,12 +603,13 @@ class InhospitalService extends PatientService
 
         return DB::transaction(function () use ($old, $patient, $patientid, $situation, $stype): array {
             if ($old) {
-                $situation['updatedat'] = timenow();
+                $situation['updated_at'] = now();
                 Situation::query()->where('situation.id', $old['id'])->update($situation);
             } else {
-                $situation['stype']     = $stype;
-                $situation['createdat'] = timenow();
-                $situation['hospseq']   = $patient['hospseq'];
+                $situation['stype']      = $stype;
+                $situation['created_at'] = now();
+                $situation['updated_at'] = now();
+                $situation['hospseq']    = $patient['hospseq'];
 
                 Situation::query()->insert($situation);
             }
@@ -646,12 +649,13 @@ class InhospitalService extends PatientService
 
         return DB::transaction(function () use ($old, $patient, $patientid, $surgery): array {
             if ($old) {
-                $surgery['updatedat'] = timenow();
+                $surgery['updated_at'] = now();
 
                 Surgery::query()->where('surgery.id', $old['id'])->update($surgery);
             } else {
-                $surgery['createdat'] = timenow();
-                $surgery['hospseq']   = $patient['hospseq'];
+                $surgery['created_at'] = now();
+                $surgery['updated_at'] = now();
+                $surgery['hospseq']    = $patient['hospseq'];
 
                 Surgery::query()->insert($surgery);
 
@@ -695,7 +699,7 @@ class InhospitalService extends PatientService
         }
 
         return DB::transaction(function () use ($old, $patientid, $surgery): array {
-            $data = ['surgeryafter' => $surgery['surgeryafter'], 'updatedat' => timenow()];
+            $data = ['surgeryafter' => $surgery['surgeryafter'], 'updated_at' => now()];
             Surgery::query()->where('surgery.id', $old['id'])->update($data);
 
             // 更新完整度
@@ -718,7 +722,6 @@ class InhospitalService extends PatientService
     /**
      * 手术记录
      *
-     *
      * @return array<string,mixed>
      */
     public function getSurgery(?string $sytype = null)
@@ -730,7 +733,6 @@ class InhospitalService extends PatientService
             ->where('surgery.patientid', $patient['patientid'])
             ->where('surgery.sytype', $sytype)
             ->where('surgery.hospseq', $this->getCurrentHospseq($patient))
-            ->where('surgery.deletedat', 0)
             ->select(explode(',', 'id,'.$this->surgeryFields))
             ->first();
         $item = $item?->getAttributes();
@@ -769,18 +771,18 @@ class InhospitalService extends PatientService
         $old = Pathology::query()
             ->where('pathology.patientid', $patientid)
             ->where('pathology.hospseq', $patient['hospseq'])
-            ->where('pathology.deletedat', 0)
             ->select('pathology.*')
             ->first();
         $old = $old?->getAttributes();
 
         return DB::transaction(function () use ($old, $pathology, $patient, $patientid, $surgery): array {
             if ($old) {
-                $pathology['updatedat'] = timenow();
+                $pathology['updated_at'] = now();
                 Pathology::query()->where('pathology.id', $old['id'])->update($pathology);
             } else {
-                $pathology['createdat'] = timenow();
-                $pathology['hospseq']   = $patient['hospseq'];
+                $pathology['created_at'] = now();
+                $pathology['updated_at'] = now();
+                $pathology['hospseq']    = $patient['hospseq'];
 
                 Pathology::query()->insert($pathology);
             }
@@ -790,7 +792,7 @@ class InhospitalService extends PatientService
             $nextfollowupday = DateTimeHelper::dayAddMonths($surgery['surgeryday'], $this->getNextDayInterval($pathology['who']));
             Patient::query()
                 ->where('patient.id', $patientid)
-                ->update(['nextfollowupday' => $nextfollowupday, 'updatedat' => timenow()]);
+                ->update(['nextfollowupday' => $nextfollowupday, 'updated_at' => now()]);
 
             $pathology['nextfollowupday'] = $nextfollowupday;
 
@@ -824,7 +826,6 @@ class InhospitalService extends PatientService
         $item = Pathology::query()
             ->where('pathology.patientid', $patientid)
             ->where('pathology.hospseq', $this->getCurrentHospseq($patient))
-            ->where('pathology.deletedat', 0)
             ->select(explode(',', $this->pathologyFields))
             ->first();
         $item = $item?->getAttributes();
@@ -926,7 +927,6 @@ class InhospitalService extends PatientService
     /**
      * 放疗
      *
-     *
      * @return array<string,mixed>
      */
     public function getRadiotherapy(int $treatmentid)
@@ -937,7 +937,6 @@ class InhospitalService extends PatientService
             ->where('radiotherapy.treatmentid', $treatmentid)
             ->where('radiotherapy.patientid', $patient['patientid'])
             ->where('radiotherapy.hospseq', $patient['hospseq'])
-            ->where('radiotherapy.deletedat', 0)
             ->select(explode(',', 'treatmentid,patientid,'.$this->radiotherapyFields))
             ->first();
         $radiotherapy                  = $radiotherapy?->getAttributes();
@@ -948,7 +947,6 @@ class InhospitalService extends PatientService
 
     /**
      * 随访：基本情况，患者情况，影像学检查，放疗
-     *
      *
      * @return array<string,mixed>
      */
@@ -985,7 +983,6 @@ class InhospitalService extends PatientService
         return Treatment::query()
             ->where('treatment.patientid', $patientid)
             ->where('treatment.outin', $this->getOutInType())
-            ->where('treatment.deletedat', 0)
             ->count();
     }
 
@@ -994,15 +991,11 @@ class InhospitalService extends PatientService
      *
      * 注：首页记录中的数据，不进治疗表，因此getSituation等方法的第一个参数treatmentid为0
      *
-     *
      * @return array<string,mixed>
      */
     public function getHomepage(int $hospseq = 0)
     {
         $categories = $this->systemService->categoriesKV();
-
-        // 第几次住院？
-        $this->hospseqForHomepage = $hospseq;
 
         // 第几次住院和对应的住院日期
         $hospdays = array_column($this->getHomePageDayList(), 'hospday', 'hospseq');
@@ -1011,8 +1004,16 @@ class InhospitalService extends PatientService
 
         // 一、基本信息，含什么时候住院的
         if ($hospseq) {
+            if (! array_key_exists($hospseq, $hospdays)) {
+                throw new PatientException('住院记录不存在。');
+            }
+
             $patient['hospday'] = $hospdays[$hospseq];
         }
+
+        // 第几次住院？
+        $this->hospseqForHomepage = $hospseq;
+
         $patientid = $patient['patientid'];
         $this->patientForPage($patient);
 
@@ -1084,7 +1085,6 @@ class InhospitalService extends PatientService
     /**
      * 患者随访记录
      *
-     *
      * @return array<string,mixed>
      */
     public function getFollowuppage(int $treatmentid)
@@ -1095,8 +1095,10 @@ class InhospitalService extends PatientService
         }
 
         // 五、放疗
-        $radiotherapy             = $this->getRadiotherapy($data['treatmentid']);
-        $radiotherapy['ryaction'] = getYesNoText($radiotherapy['ryaction']);
+        $radiotherapy = $this->getRadiotherapy($data['treatmentid']);
+        if ($radiotherapy) {
+            $radiotherapy['ryaction'] = getYesNoText($radiotherapy['ryaction']);
+        }
 
         $data['radiotherapy'] = $radiotherapy;
 
@@ -1115,7 +1117,6 @@ class InhospitalService extends PatientService
         return Treatment::query()
             ->where('treatment.patientid', $patientid)
             ->where('treatment.outin', $this->getOutInType())
-            ->where('treatment.deletedat', 0)
             ->select('id AS treatmentid', 'checkday')
             ->get()
             ->map(fn (Treatment $record): array => $record->getAttributes())

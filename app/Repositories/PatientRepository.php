@@ -12,7 +12,6 @@ class PatientRepository
     public function countByTypeForHospital(int $hospitalid): array
     {
         return Patient::query()
-            ->where('deletedat', 0)
             ->where('hospitalid', $hospitalid)
             ->selectRaw('isout, COUNT(id) AS total')
             ->groupBy('isout')

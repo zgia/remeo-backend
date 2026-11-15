@@ -160,8 +160,7 @@ class PatientService
     public function getPatientById(int $patientid)
     {
         $conds = [
-            'patient.id'        => $patientid,
-            'patient.deletedat' => 0,
+            'patient.id' => $patientid,
         ];
         if (! isViewer(UserService::user())) {
             $conds['patient.hospitalid'] = currentHospitalId();
@@ -194,7 +193,7 @@ class PatientService
             ->where('patient.id', $patientid)
             ->update([
                 $this->deleteTag => 1,
-                'deletedat'      => timenow(),
+                'deleted_at'     => now(),
             ]);
 
         // 保存日志
@@ -241,8 +240,6 @@ class PatientService
             ];
         }
 
-        $conds['deletedat'] = 0;
-
         // 不指定某次治疗的话，取最后一次的
         $treatment = Treatment::query()
             ->where($conds)
@@ -264,7 +261,6 @@ class PatientService
         // 患者情况
         $situation = Situation::query()
             ->where('situation.treatmentid', $treatmentid)
-            ->where('situation.deletedat', 0)
             ->select(explode(',', $this->situationFields))
             ->first();
         $situation = $situation?->getAttributes();
@@ -272,7 +268,6 @@ class PatientService
         // 影像学检查
         $video = Video::query()
             ->where('video.treatmentid', $treatmentid)
-            ->where('video.deletedat', 0)
             ->select(explode(',', $this->videoFields))
             ->first();
         $video = $video?->getAttributes();
@@ -297,7 +292,7 @@ class PatientService
 
         // 更新完整度
         if (! $progress) {
-            Progress::query()->insert(['patientid' => $patientid]);
+            Progress::query()->insert(['patientid' => $patientid, 'created_at' => now(), 'updated_at' => now()]);
         }
     }
 
@@ -395,11 +390,12 @@ class PatientService
         $patient = $this->getPatient();
 
         if ($updated) {
-            $data['updatedat'] = timenow();
+            $data['updated_at'] = now();
         } else {
-            $data['createdat'] = timenow();
-            $data['patientid'] = $this->getPatientid();
-            $data['hospseq']   = $patient['hospseq'];
+            $data['created_at'] = now();
+            $data['updated_at'] = now();
+            $data['patientid']  = $this->getPatientid();
+            $data['hospseq']    = $patient['hospseq'];
         }
 
         foreach (explode(',', $fields) as $sf) {
@@ -453,7 +449,6 @@ class PatientService
                 // 检查当前患者第几次来就诊
                 $step = (int) Treatment::query()
                     ->where('treatment.patientid', $patientid)
-                    ->where('treatment.deletedat', 0)
                     ->max('step');
 
                 // 基本情况写到treatment表
@@ -585,7 +580,6 @@ class PatientService
             'patientid' => $patientid,
             'stype'     => $stype,
             'hospseq'   => $this->getCurrentHospseq($patient),
-            'deletedat' => 0,
         ];
 
         if ($treatmentid) {
@@ -682,7 +676,6 @@ class PatientService
             'patientid' => $patientid,
             'vtype'     => $vtype,
             'hospseq'   => $this->getCurrentHospseq($patient),
-            'deletedat' => 0,
         ];
 
         if ($treatmentid) {
@@ -720,14 +713,13 @@ class PatientService
             ->where('video.patientid', $patientid)
             ->where('video.vtype', $video['vtype'])
             ->where('video.hospseq', $patient['hospseq'])
-            ->where('video.deletedat', 0)
             ->select('video.*')
             ->first();
         $old = $old?->getAttributes();
 
         return DB::transaction(function () use ($old, $patient, $patientid, $video): array {
             if ($old) {
-                $video['updatedat'] = timenow();
+                $video['updated_at'] = now();
 
                 Video::query()->where('video.id', $old['id'])->update($video);
             } else {
@@ -737,8 +729,9 @@ class PatientService
                     $this->addOpFirstVideoToTreatment($video);
                 }
 
-                $video['createdat'] = timenow();
-                $video['hospseq']   = $patient['hospseq'];
+                $video['created_at'] = now();
+                $video['updated_at'] = now();
+                $video['hospseq']    = $patient['hospseq'];
 
                 Video::query()->insert($video);
             }
@@ -772,17 +765,17 @@ class PatientService
             ->where('treatment.patientid', $video['patientid'])
             ->where('treatment.outin', ConstantType::HospitalizedOutpatient->value)
             ->where('treatment.step', 1)
-            ->where('treatment.deletedat', 0)
             ->value('id');
 
         if ($treatmentid) {
             $video['treatmentid'] = $treatmentid;
         } else {
             $treatment = [
-                'patientid' => $video['patientid'],
-                'outin'     => ConstantType::HospitalizedOutpatient->value,
-                'step'      => 1,
-                'createdat' => timenow(),
+                'patientid'  => $video['patientid'],
+                'outin'      => ConstantType::HospitalizedOutpatient->value,
+                'step'       => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
 
             $video['treatmentid'] = Treatment::query()->insertGetId($treatment);
@@ -803,7 +796,7 @@ class PatientService
         $this->patientForPage($patient);
 
         // 二、患者基本情况: 最后一次随访或者指定随访
-        $conds = ['patientid' => $patient['patientid'], 'outin' => $this->getOutInType(), 'deletedat' => 0];
+        $conds = ['patientid' => $patient['patientid'], 'outin' => $this->getOutInType()];
         if ($treatmentid) {
             $conds['id'] = $treatmentid;
         }
@@ -872,11 +865,12 @@ class PatientService
             $url      = '/file/'.$path;
             $thumbUrl = $thumb ? '/file/'.$thumbPath : $url;
             $mediaId  = Media::query()->insertGetId([
-                'patientid' => $this->patientid,
-                'file'      => $url,
-                'thumb'     => $thumbUrl,
-                'mdesc'     => $file->getClientOriginalName(),
-                'createdat' => timenow(),
+                'patientid'  => $this->patientid,
+                'file'       => $url,
+                'thumb'      => $thumbUrl,
+                'mdesc'      => $file->getClientOriginalName(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         } catch (\Throwable $exception) {
             $disk->delete([$path, $thumbPath]);
@@ -897,7 +891,6 @@ class PatientService
 
         $conds = [
             'patientid' => $patientid,
-            'deletedat' => 0,
         ];
 
         $media = Media::query()
@@ -934,7 +927,7 @@ class PatientService
         $media = $media?->getAttributes();
 
         if ($media && $media['patientid'] == $this->getPatientid()) {
-            Media::query()->where('media.id', $fileid)->update(['deletedat' => timenow()]);
+            Media::query()->where('media.id', $fileid)->delete();
 
             return true;
         }

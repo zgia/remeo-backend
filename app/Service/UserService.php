@@ -73,15 +73,16 @@ class UserService
         }
 
         if ($userid) {
-            $user['updatedat'] = timenow();
+            $user['updated_at'] = now();
             User::query()->where('user.id', $userid)->update($user);
         } else {
             // 新建用户时，密码默认为手机号的最后7位
             $user['salt']     = '';
             $user['password'] = static::getInitPassword($user['mobile'], $user['salt']);
 
-            $user['createdat'] = timenow();
-            $userid            = $this->userRepository->createUser($user);
+            $user['created_at'] = now();
+            $user['updated_at'] = now();
+            $userid             = $this->userRepository->createUser($user);
         }
 
         // 保存日志
@@ -116,7 +117,7 @@ class UserService
         $smscode = SmsCode::query()
             ->where('smscode.mobile', $mobile)
             ->where('smscode.smscode', $code)
-            ->where('smscode.createdat', '>', timenow() - getOption('smslife', 900))
+            ->where('smscode.created_at', '>', now()->subSeconds((int) getOption('smslife', 900)))
             ->select('smscode.*')
             ->first();
         $smscode = $smscode?->getAttributes();
@@ -124,7 +125,7 @@ class UserService
         if ($smscode) {
             $password = Str::random(12);
 
-            $data             = ['salt' => '', 'updatedat' => timenow()];
+            $data             = ['salt' => '', 'updated_at' => now()];
             $data['password'] = static::genPassword($password, $data['salt']);
 
             User::query()->where('user.id', $smscode['userid'])->update($data);
@@ -155,11 +156,12 @@ class UserService
         $smscode = (string) random_int(100000, 999999);
 
         SmsCode::query()->insert([
-            'userid'    => $user['id'],
-            'mobile'    => $user['mobile'],
-            'smscode'   => $smscode,
-            'createdat' => timenow(),
-            'smsday'    => formatDate(),
+            'userid'     => $user['id'],
+            'mobile'     => $user['mobile'],
+            'smscode'    => $smscode,
+            'created_at' => now(),
+            'updated_at' => now(),
+            'smsday'     => formatDate(),
         ]);
 
         $this->sendSMSToUser($user, $smscode, 'code');
@@ -171,10 +173,11 @@ class UserService
     public function sendSMSToUser(array $user, string $code, string $type): void
     {
         SmsLog::query()->insert([
-            'userid'    => $user['id'],
-            'mobile'    => $user['mobile'],
-            'msg'       => json_encode(['type' => $type], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-            'createdat' => timenow(),
+            'userid'     => $user['id'],
+            'mobile'     => $user['mobile'],
+            'msg'        => json_encode(['type' => $type], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $this->sms->sendSMS($user['mobile'], $code, $type);

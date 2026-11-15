@@ -1,5 +1,4 @@
 ---
-
 name: neo-laravel
 description: 在本仓库中实现、修复、重构、测试或评审 Laravel 和 PHP 后端工作时使用。涉及 PHP、路由、API、Controller、Request、Resource、Service、Repository、Model、Enum、存储、Migration、测试或后端文档时使用。
 ---
@@ -68,7 +67,7 @@ description: 在本仓库中实现、修复、重构、测试或评审 Laravel �
 * 文案；
 * 路由完整清单。
 
-这些信息应从当前代码、Schema、测试和 `docs/` 中读取。
+这些信息应从 `README.md`、当前代码、Schema 与测试中读取。
 
 ## 通用 Laravel 指导
 
@@ -78,43 +77,15 @@ description: 在本仓库中实现、修复、重构、测试或评审 Laravel �
 
 但它只是通用建议。
 
-当它与以下内容冲突时，优先级为：
-
-1. 用户当前指令；
-2. 项目 Rules；
-3. 当前代码、Schema、测试和规范业务文档；
-4. 通用 Laravel 建议。
+发生冲突时，优先级遵循 `AGENTS.md`：用户当前指令 > 项目 Rules > `README.md`、代码、Schema 与测试 > 通用 Laravel 建议。
 
 ## 验证
 
-PHP 改动完成后：
-
-```bash
-./vendor/bin/pint --parallel <changed-php-files...>
-```
-
-涉及 `app/` 的 PHP 文件：
-
-```bash
-./vendor/bin/phpstan analyse --memory-limit=2G <changed-app-files...>
-```
-
-根据风险运行最小且相关的测试：
-
-```bash
-php artisan test <test-path-or-filter>
-```
+质量门禁的准确命令见 `.agents/rules/20-architecture-and-code-quality.instructions.md` 的 `QUALITY GATES`：Pint → PHPStan → 按风险运行的测试；全量测试入口为 `composer test`，局部用 `php artisan test <test-path-or-filter>`。
 
 如果仓库存在本地 PHPUnit 配置，优先使用该配置。
 
-完成后：
-
-```bash
-git diff --check
-git diff
-```
-
-检查最终 diff，确认：
+完成前检查最终 diff，确认：
 
 * 当前任务的修改完整；
 * 无关修改没有被覆盖；
@@ -130,11 +101,4 @@ git diff
 * 未执行的验证及原因；
 * 如有发现但未处理的无关问题，简要说明。
 
-除非用户明确要求，否则不得：
-
-* `git commit`
-* `git push`
-* 创建 Pull Request
-* 发布
-* 修改真实数据
-* 执行破坏性数据库操作
+安全边界（禁止 `git commit`、`git push`、创建 PR 或发布，禁止修改真实数据与破坏性数据库操作）见 `AGENTS.md` 的「工作区安全」。

@@ -24,7 +24,7 @@ class PatientListRequest extends FormRequest
             'sort'       => ['nullable', Rule::in([
                 'id', 'realname', 'age', 'gender', 'firstday', 'hospday', 'hospcode', 'hospseq',
                 'checkcount', 'followupcount', 'lastcheckday', 'nextcheckday',
-                'lastfollowupday', 'nextfollowupday', 'createdat', 'updatedat',
+                'lastfollowupday', 'nextfollowupday', 'created_at', 'updated_at',
             ])],
             'order' => ['nullable', Rule::in(['ascending', 'descending', 'asc', 'desc', 'ASC', 'DESC'])],
         ];

@@ -40,7 +40,8 @@ class LogRepository
                     'userid'      => (int) ($data['userid'] ?? currentUserId()),
                     'fromcontent' => json_encode($data['from'] ?? [], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
                     'tocontent'   => json_encode($data['to'] ?? [], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-                    'createdat'   => timenow(),
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
                 ]
             );
     }

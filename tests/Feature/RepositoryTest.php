@@ -21,7 +21,7 @@ class RepositoryTest extends TestCase
             'mobile' => '13800000021', 'password' => '测试密码摘要', 'salt' => 'abcdef',
         ]);
         $deletedId = $repository->createUser([
-            'mobile' => '13800000022', 'password' => '已删除账户摘要', 'deletedat' => 1,
+            'mobile' => '13800000022', 'password' => '已删除账户摘要', 'deleted_at' => '2026-01-01 12:12:12',
         ]);
 
         $user = $repository->getUserByMobile('13800000021');
@@ -67,13 +67,13 @@ class RepositoryTest extends TestCase
     public function test_hospital_and_permission_repositories_keep_soft_delete_filters(): void
     {
         DB::table('hospital')->insert([
-            ['id' => 21, 'title' => '有效医院', 'deletedat' => 0],
-            ['id' => 22, 'title' => '已删除医院', 'deletedat' => 1],
+            ['id' => 21, 'title' => '有效医院', 'deleted_at' => null],
+            ['id' => 22, 'title' => '已删除医院', 'deleted_at' => '2026-01-01 12:12:12'],
         ]);
         DB::table('userpermission')->insert([
-            ['doctorid' => 21, 'permissioncode' => 'download.patient', 'deletedat' => 0],
-            ['doctorid' => 21, 'permissioncode' => 'deleted.permission', 'deletedat' => 1],
-            ['doctorid' => 22, 'permissioncode' => 'other.permission', 'deletedat' => 0],
+            ['doctorid' => 21, 'permissioncode' => 'download.patient', 'deleted_at' => null],
+            ['doctorid' => 21, 'permissioncode' => 'deleted.permission', 'deleted_at' => '2026-01-01 12:12:12'],
+            ['doctorid' => 22, 'permissioncode' => 'other.permission', 'deleted_at' => null],
         ]);
 
         $hospital = app(HospitalRepository::class);

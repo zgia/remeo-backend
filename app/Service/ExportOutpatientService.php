@@ -157,13 +157,12 @@ class ExportOutpatientService extends OutpatientService
     private function basic(array $patients, array $categories)
     {
         $conds = [
-            'stype'               => SituationType::OpFisrt->value,
-            'situation.deletedat' => 0,
+            'stype' => SituationType::OpFisrt->value,
         ];
         $data = Situation::query()
             ->where($conds)
             ->join('patient AS p', 'p.id', '=', 'situation.patientid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select(explode(',', 'situation.id,patientid,'.$this->situationFields))
             ->get()
             ->keyBy('id')
@@ -195,13 +194,12 @@ class ExportOutpatientService extends OutpatientService
     private function video(array $patients, array $categories)
     {
         $conds = [
-            'vtype'           => VideoType::OpFisrt->value,
-            'video.deletedat' => 0,
+            'vtype' => VideoType::OpFisrt->value,
         ];
         $data = Video::query()
             ->where($conds)
             ->join('patient AS p', 'p.id', '=', 'video.patientid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select(explode(',', 'video.id,patientid,lesionposition,'.implode(',', array_keys(static::OUTPATIENT_FIELDS['影像学检查']))))
             ->get()
             ->keyBy('id')
@@ -239,7 +237,6 @@ class ExportOutpatientService extends OutpatientService
         $treatments = Treatment::query()
             ->where('treatment.outin', ConstantType::HospitalizedOutpatient->value)
             ->where('treatment.step', '<>', 1)
-            ->where('treatment.deletedat', 0)
             ->select('id', 'patientid', 'checkday', 'checkway', 'checkalive')
             ->orderBy('checkday', 'asc')
             ->orderBy('id', 'asc')
@@ -255,7 +252,6 @@ class ExportOutpatientService extends OutpatientService
         // 患者情况
         $situations = Situation::query()
             ->where('situation.stype', SituationType::OpCheck->value)
-            ->where('situation.deletedat', 0)
             ->select(explode(',', 'treatmentid,'.$this->situationFields))
             ->get()
             ->map(fn (Situation $record): array => $record->getAttributes())
@@ -264,7 +260,6 @@ class ExportOutpatientService extends OutpatientService
         // 影像学检查
         $videos = Video::query()
             ->where('video.vtype', VideoType::OpCheck->value)
-            ->where('video.deletedat', 0)
             ->select(explode(',', 'treatmentid,'.$this->videoFields))
             ->get()
             ->map(fn (Video $record): array => $record->getAttributes())
@@ -401,7 +396,6 @@ class ExportOutpatientService extends OutpatientService
         $conds = [
             'patient.isin'              => 0,
             'patient.'.$this->deleteTag => 0,
-            'patient.deletedat'         => 0,
         ];
 
         // 超级用户可以下载所有数据

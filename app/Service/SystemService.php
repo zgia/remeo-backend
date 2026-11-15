@@ -57,9 +57,14 @@ class SystemService
 
                 $categories[$key] = [];
             } else {
-                $id = $titles[$cat['parentid']] == 'kps' ? static::KPS_MAPPING[$cat['id']] : $cat['id'];
+                $title = $titles[$cat['parentid']] ?? null;
+                if (empty($title)) {
+                    continue;
+                }
 
-                $categories[$titles[$cat['parentid']]][] = [
+                $id = $title == 'kps' ? (static::KPS_MAPPING[$cat['id']] ?? $cat['id']) : $cat['id'];
+
+                $categories[$title][] = [
                     'value' => $id,
                     'title' => $cat['title'],
                 ];

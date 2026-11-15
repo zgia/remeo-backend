@@ -13,7 +13,6 @@ class UserPermissionRepository
     {
         return UserPermission::query()
             ->where('doctorid', $doctorid)
-            ->where('deletedat', 0)
             ->pluck('permissioncode')
             ->all();
     }

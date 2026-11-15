@@ -67,7 +67,6 @@ class UserRepository
 
         $user = User::query()
             ->where($cond)
-            ->where('deletedat', 0)
             ->first();
 
         // 内部密码校验需要 password 和 salt，不能使用会隐藏凭据的 toArray()。
@@ -134,7 +133,6 @@ class UserRepository
 
         return User::query()
             ->whereIn('id', (array) $userids)
-            ->where('deletedat', 0)
             ->get()
             ->keyBy('id')
             ->map(fn (User $record): array => $record->getAttributes())

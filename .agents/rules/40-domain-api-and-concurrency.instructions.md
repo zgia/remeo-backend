@@ -7,17 +7,16 @@ applyTo: "{app/**/*.php,routes/**/*.php,tests/**/*.php}"
 
 ## BUSINESS VALUES
 
-- 新增或扩展会被持久化、校验、跨层传递或暴露为接口契约的封闭业务值集，必须先定义或复用 `app/Enums/*Enum.php`。
+- 新增或扩展会被持久化、校验、跨层传递或暴露为接口契约的封闭业务值集，必须先定义或复用 `app/Enums/` 下的枚举。
 - 同一业务概念已有 Enum 时必须复用，不创建平行常量或重复值集合。
 - 外部协议固定字面量、配置键、数组结构键和局部算法字符串不要求创建 Enum。
 
 ## API AND EXCEPTIONS
 
-- 可预期的业务拒绝使用 `BusinessException` 和 `BusinessCode`。
+- 可预期的业务拒绝使用 `App\Exception\BusinessException`（可通过 `setMore()` 附带数据），由 `bootstrap/app.php` 统一渲染为 HTTP 418。
 - 参数校验、认证授权、基础设施故障和编程错误使用各自正确的异常机制。
-- 实体响应优先使用项目 Resource 和统一成功响应。
+- 接口响应使用 `BaseController` 的统一成功/失败格式；实体字段由 Controller 组装，不引入无关的 Resource 层。
 - 路径、资源名和响应结构遵循现有接口契约，不因局部任务进行无关重命名。
-- 内部金额使用货币最小单位整数存储和计算，不使用浮点数。
 
 ## TRANSACTIONS
 

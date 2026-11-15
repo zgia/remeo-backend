@@ -156,13 +156,12 @@ class ExportInhospitalService extends InhospitalService
     private function basic(array $patients, array $categories)
     {
         $conds = [
-            'stype'               => SituationType::IhInhospital->value,
-            'situation.deletedat' => 0,
+            'stype' => SituationType::IhInhospital->value,
         ];
         $data = Situation::query()
             ->where($conds)
             ->join('patient AS p', 'p.id', '=', 'situation.patientid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select(explode(',', 'situation.id,patientid,situation.hospseq,'.$this->situationFields))
             ->get()
             ->keyBy('id')
@@ -198,13 +197,12 @@ class ExportInhospitalService extends InhospitalService
     private function video(array $patients, array $categories)
     {
         $conds = [
-            'vtype'           => VideoType::IhBefore->value,
-            'video.deletedat' => 0,
+            'vtype' => VideoType::IhBefore->value,
         ];
         $data = Video::query()
             ->where($conds)
             ->join('patient AS p', 'p.id', '=', 'video.patientid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select(explode(',', 'video.id,patientid,video.hospseq,'.$this->videoFields))
             ->get()
             ->keyBy('id')
@@ -237,13 +235,12 @@ class ExportInhospitalService extends InhospitalService
     private function surgery(array $patients, array $categories)
     {
         $conds = [
-            'surgery.sytype'    => SurgeryType::Surgery->value,
-            'surgery.deletedat' => 0,
+            'surgery.sytype' => SurgeryType::Surgery->value,
         ];
         $data = Surgery::query()
             ->where($conds)
             ->join('patient AS p', 'p.id', '=', 'surgery.patientid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select(explode(',', 'surgery.id,patientid,surgery.hospseq,'.$this->surgeryFields))
             ->get()
             ->keyBy('id')
@@ -277,12 +274,11 @@ class ExportInhospitalService extends InhospitalService
     private function pathology(array $patients, array $categories)
     {
         $conds = [
-            'pathology.deletedat' => 0,
         ];
         $data = Pathology::query()
             ->where($conds)
             ->join('patient AS p', 'p.id', '=', 'pathology.patientid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select(explode(',', 'pathology.id,patientid,pathology.hospseq,'.$this->pathologyFields))
             ->get()
             ->keyBy('id')
@@ -312,13 +308,12 @@ class ExportInhospitalService extends InhospitalService
     private function discharge(array $patients, array $categories)
     {
         $conds = [
-            'stype'               => SituationType::IhDischarge->value,
-            'situation.deletedat' => 0,
+            'stype' => SituationType::IhDischarge->value,
         ];
         $data = Situation::query()
             ->where($conds)
             ->join('patient AS p', 'p.id', '=', 'situation.patientid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select(explode(',', 'situation.id,patientid,situation.hospseq,'.$this->situationFields))
             ->get()
             ->keyBy('id')
@@ -347,13 +342,12 @@ class ExportInhospitalService extends InhospitalService
     private function followup(array $categories)
     {
         $conds = [
-            'outin'               => $this->getOutInType(),
-            'treatment.deletedat' => 0,
+            'outin' => $this->getOutInType(),
         ];
         $data = Treatment::query()
             ->where($conds)
             ->join('patient AS p', 'p.lastfollowupid', '=', 'treatment.id')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select('treatment.id', 'patientid', 'checkday', 'checkway', 'checkalive')
             ->get()
             ->keyBy('id')
@@ -380,13 +374,12 @@ class ExportInhospitalService extends InhospitalService
     private function followupSituation(array $categories)
     {
         $conds = [
-            'stype'               => $this->getSituationType(),
-            'situation.deletedat' => 0,
+            'stype' => $this->getSituationType(),
         ];
         $data = Situation::query()
             ->where($conds)
             ->join('patient AS p', 'p.lastfollowupid', '=', 'situation.treatmentid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select('patientid', 'kps', 'cc', 'positive', 'epilepsy')
             ->get()
             ->map(fn (Situation $record): array => $record->getAttributes())
@@ -407,13 +400,12 @@ class ExportInhospitalService extends InhospitalService
     private function followupVideo(array $categories)
     {
         $conds = [
-            'vtype'           => $this->getVideoType(),
-            'video.deletedat' => 0,
+            'vtype' => $this->getVideoType(),
         ];
         $data = Video::query()
             ->where($conds)
             ->join('patient AS p', 'p.lastfollowupid', '=', 'video.treatmentid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select(explode(',', 'patientid,'.$this->videoFields))
             ->get()
             ->map(fn (Video $record): array => $record->getAttributes())
@@ -435,12 +427,11 @@ class ExportInhospitalService extends InhospitalService
     private function followupRadiotherapy()
     {
         $conds = [
-            'radiotherapy.deletedat' => 0,
         ];
         $data = Radiotherapy::query()
             ->where($conds)
             ->join('patient AS p', 'p.lastfollowupid', '=', 'radiotherapy.treatmentid')
-            ->where('p.deletedat', 0)
+            ->whereNull('p.deleted_at')
             ->select(explode(',', 'patientid,'.$this->radiotherapyFields))
             ->get()
             ->map(fn (Radiotherapy $record): array => $record->getAttributes())
@@ -459,7 +450,7 @@ class ExportInhospitalService extends InhospitalService
         $categories = $this->systemService->categoriesKV();
 
         // 处理当前医院所有医生的住院患者
-        $conds = ['patient.isin' => 1, 'patient.'.$this->deleteTag => 0, 'patient.deletedat' => 0];
+        $conds = ['patient.isin' => 1, 'patient.'.$this->deleteTag => 0];
 
         // 超级用户可以下载所有数据
         if (! isAdministrator()) {
@@ -479,14 +470,15 @@ class ExportInhospitalService extends InhospitalService
             ->all();
 
         // 添加医院名称到患者信息内
-        $hospitals = array_column(Hospital::query()
-            ->select('hospital.*')
+        $hospitals = Hospital::query()
+            ->withTrashed()
             ->get()
             ->keyBy('id')
-            ->map(fn (Hospital $record): array => $record->getAttributes())
-            ->all(), 'title', 'id');
+            ->all();
         foreach ($patients as &$patient) {
-            $patient['hospital'] = $hospitals[$patient['hospitalid']];
+            $hospital = $hospitals[$patient['hospitalid']] ?? null;
+
+            $patient['hospital'] = $hospital ? ($hospital['title'].($hospital['deleted_at'] !== null ? '(已删除)' : '')) : '';
         }
 
         // 入院情况

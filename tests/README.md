@@ -23,7 +23,7 @@ php vendor/bin/phpunit tests/Feature/RouteAuthenticationTest.php
 - 通过 Laravel HTTP Kernel 运行真实路由、中间件、FormRequest、Controller、Service 和数据库查询。
 - GET 使用 query；POST、DELETE 使用表单参数；上传使用模拟图片。
 - JSON 响应检查 HTTP 200、`code: 0`、`msg`、`data` 和接口关键字段。
-- 写入接口检查数据库结果；删除检查 `deletedat`；密码检查摘要和会话；再次住院检查历史记录和完整度重置。
+- 写入接口检查数据库结果；删除检查 `deleted_at`；密码检查摘要和会话；再次住院检查历史记录和完整度重置。
 - Excel 和 Word 下载检查响应头，并打开生成文件确认包含目标患者。
 - 用例清单与 Laravel 实际注册的全部 `web` 路由比较。新增、移除或改变请求方法时，必须同步 `RouteContractTest::cases()`，否则测试失败。GET 自动附带的 HEAD 不计作独立业务接口。
 - `RouteAuthenticationTest` 遍历全部受保护业务路由，确认未登录请求被拒绝；现有 `MigrationTest` 补充参数错误、跨医院访问、下载权限、CSRF 和业务流程回归。
@@ -32,7 +32,7 @@ php vendor/bin/phpunit tests/Feature/RouteAuthenticationTest.php
 
 默认 `phpunit.xml` 使用 SQLite `:memory:`；`phpunit.mysql.xml` 使用 `.env` 中的 MySQL 开发连接，凭据不写入测试配置。两种模式均使用数组缓存、数组会话和 `DatabaseTransactions`，每个用例结束后回滚。
 
-MySQL 模式要求 `REMEO_MYSQL_TEST_DATABASE` 与实际连接的库名完全一致，且全部原表使用 InnoDB。测试通过 `SHOW CREATE TABLE` 读取开发库真实结构，在当前连接内建立同名临时表；不复制数据、不重置开发表，也不在 MySQL 上执行迁移。固定测试 ID 只写入临时表，因此不会碰到已有患者和医生。临时表随连接关闭自动释放，测试禁止持久连接和自动重连，避免失去临时表后误访问原表。
+MySQL 模式要求 `REMEO_MYSQL_TEST_DATABASE` 与实际连接的库名完全一致，且全部原表使用 InnoDB。测试通过 `SHOW CREATE TABLE` 读取开发库真实结构，在当前连接内建立同名临时表；不复制数据、不重置开发表，也不在 MySQL 上执行迁移。固定测试 ID 只写入临时表，因此不会碰到已有患者和医生。临时表随连接关闭自动释放，测试禁止持久连接和自动重连，避免失去临时表后误访问原表。时间字段迁移回填用例会执行 DDL，只在 SQLite 内存库运行，MySQL 模式下跳过。
 
 数据库账号需要读取结构和创建临时表的权限。如果提示 `CREATE TEMPORARY TABLE` 权限不足，由管理员按实际库名与账号授权，例如本机开发配置：
 

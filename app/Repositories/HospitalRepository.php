@@ -12,7 +12,6 @@ class HospitalRepository
     {
         return Hospital::query()
             ->where('id', $hospitalid)
-            ->where('deletedat', 0)
             ->value('title');
     }
 }

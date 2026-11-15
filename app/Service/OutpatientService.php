@@ -81,7 +81,7 @@ class OutpatientService extends PatientService
         $patient = [
             'lastcheckday' => $day,
             'nextcheckday' => $nextday,
-            'updatedat'    => timenow(),
+            'updated_at'   => now(),
         ];
 
         Patient::query()->where('patient.id', $patientid)->update($patient);
@@ -112,7 +112,6 @@ class OutpatientService extends PatientService
         $conds = [
             'patient.isout'             => yes(),
             'patient.'.$this->deleteTag => 0,
-            'patient.deletedat'         => 0,
         ];
 
         // -1表示来查看其他医院的患者
@@ -149,25 +148,28 @@ class OutpatientService extends PatientService
 
         $doctorids = array_unique(array_column($ps, 'doctorid'));
         $doctors   = User::query()
+            ->withTrashed()
             ->whereIn('user.id', $doctorids)
-            ->where('user.deletedat', 0)
-            ->select('user.*')
-            ->pluck('realname', 'id')
+            ->get()
+            ->keyBy('id')
             ->all();
 
         $hospitalids = array_unique(array_column($ps, 'hospitalid'));
         $hospitals   = Hospital::query()
+            ->withTrashed()
             ->whereIn('hospital.id', $hospitalids)
-            ->where('hospital.deletedat', 0)
-            ->select('hospital.*')
-            ->pluck('title', 'id')
+            ->get()
+            ->keyBy('id')
             ->all();
 
         $patients = [];
         foreach ($ps as $p) {
+            $hospital = $hospitals[$p['hospitalid']] ?? null;
+            $doctor   = $doctors[$p['doctorid']]     ?? null;
+
             $patients[] = [
                 'patientid' => $p['patientid'],
-                'hospital'  => $hospitals[$p['hospitalid']],
+                'hospital'  => $hospital ? ($hospital['title'].($hospital['deleted_at'] !== null ? '(已删除)' : '')) : '',
                 'realname'  => $p['realname'],
                 'age'       => $p['age'],
                 'firstday'  => $p['firstday'],
@@ -179,7 +181,7 @@ class OutpatientService extends PatientService
                 'lastcheckday' => $p['lastcheckday'],
                 'nextcheckday' => $p['nextcheckday'],
                 'isin'         => $p['isin'] == yes(),
-                'recorder'     => $doctors[$p['doctorid']],
+                'recorder'     => $doctor ? ($doctor['realname'].($doctor['deleted_at'] !== null ? '(已删除)' : '')) : '',
                 'isfemale'     => isFemale($p['gender']),
             ];
         }
@@ -232,7 +234,6 @@ class OutpatientService extends PatientService
         $ps = Patient::query()
             ->where('patient.hospitalid', currentHospitalId())
             ->where('patient.realname', 'LIKE', $patient['realname'].'%')
-            ->where('patient.deletedat', 0)
             ->select('id', 'idcard', 'realname', 'mobile', 'mobile2', 'mobile3')
             ->get()
             ->keyBy('id')
@@ -266,7 +267,8 @@ class OutpatientService extends PatientService
         // 创建患者时，下一次检查时间是首诊时间加1年
         $patient['nextcheckday'] = DateTimeHelper::dayAddMonths($patient['firstday'], 12);
 
-        $patient['createdat'] = timenow();
+        $patient['created_at'] = now();
+        $patient['updated_at'] = now();
 
         $patient['patientid'] = Patient::query()->insertGetId($patient);
 
@@ -299,7 +301,6 @@ class OutpatientService extends PatientService
             $p = Patient::query()
                 ->where('patient.idcard', $patient['idcard'])
                 ->where('patient.id', '!=', $patientid)
-                ->where('patient.deletedat', 0)
                 ->select('id', 'idcard', 'realname')
                 ->first();
             $p = $p?->getAttributes();
@@ -311,7 +312,7 @@ class OutpatientService extends PatientService
 
         // 更新患者时，下一次检查时间是首诊时间加1年
         $patient['nextcheckday'] = DateTimeHelper::dayAddMonths($patient['firstday'], 12);
-        $patient['updatedat']    = timenow();
+        $patient['updated_at']   = now();
 
         Patient::query()->where('patient.id', $patientid)->update($patient);
 
@@ -348,7 +349,6 @@ class OutpatientService extends PatientService
             ->where('treatment.patientid', $patientid)
             ->where('treatment.outin', $this->getOutInType())
             ->where('treatment.step', 1)
-            ->where('treatment.deletedat', 0)
             ->value('id');
 
         return DB::transaction(function () use ($patientid, $situation, $treatmentid): array {
@@ -356,14 +356,13 @@ class OutpatientService extends PatientService
             $old = Situation::query()
                 ->where('situation.patientid', $patientid)
                 ->where('situation.stype', SituationType::OpFisrt->value)
-                ->where('situation.deletedat', 0)
                 ->select('situation.*')
                 ->first();
             $old = $old?->getAttributes();
 
             // 已经有首诊情况，则是编辑
             if ($old) {
-                $situation['updatedat'] = timenow();
+                $situation['updated_at'] = now();
 
                 Situation::query()->where('situation.id', $old['id'])->update($situation);
             } else {
@@ -371,17 +370,19 @@ class OutpatientService extends PatientService
                     $situation['treatmentid'] = $treatmentid;
                 } else {
                     $treatment = [
-                        'step'      => 1,
-                        'patientid' => $patientid,
-                        'outin'     => $this->getOutInType(),
-                        'createdat' => timenow(),
+                        'step'       => 1,
+                        'patientid'  => $patientid,
+                        'outin'      => $this->getOutInType(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ];
 
                     $situation['treatmentid'] = Treatment::query()->insertGetId($treatment);
                 }
 
-                $situation['stype']     = SituationType::OpFisrt->value;
-                $situation['createdat'] = timenow();
+                $situation['stype']      = SituationType::OpFisrt->value;
+                $situation['created_at'] = now();
+                $situation['updated_at'] = now();
 
                 Situation::query()->insert($situation);
             }
@@ -438,7 +439,6 @@ class OutpatientService extends PatientService
         $count = Treatment::query()
             ->where('treatment.patientid', $patientid)
             ->where('treatment.outin', $this->getOutInType())
-            ->where('treatment.deletedat', 0)
             ->count();
 
         return $count ? $count - 1 : 0;
@@ -467,7 +467,6 @@ class OutpatientService extends PatientService
             ->where('treatment.patientid', $patientid)
             ->where('treatment.outin', $this->getOutInType())
             ->where('treatment.step', '<>', 1)
-            ->where('treatment.deletedat', 0)
             ->select('id AS treatmentid', 'checkday')
             ->get()
             ->map(fn (Treatment $record): array => $record->getAttributes())
@@ -484,9 +483,9 @@ class OutpatientService extends PatientService
         $patientid = $this->getPatientid();
 
         $data = [
-            'isin'      => $undo ? 0 : 1,
-            'hospseq'   => $undo ? 0 : 1,
-            'updatedat' => timenow(),
+            'isin'       => $undo ? 0 : 1,
+            'hospseq'    => $undo ? 0 : 1,
+            'updated_at' => now(),
         ];
 
         Patient::query()->where('patient.id', $patientid)->update($data);

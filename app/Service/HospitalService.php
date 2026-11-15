@@ -29,7 +29,6 @@ class HospitalService
     public function getAllItems()
     {
         return Hospital::query()
-            ->where('hospital.deletedat', 0)
             ->select('id AS hospitalid', 'title')
             ->orderBy('title')
             ->get()
@@ -46,7 +45,7 @@ class HospitalService
     {
         $perpage = (int) getOption('perpage', 20);
 
-        $conds = ['hospital.deletedat' => 0];
+        $conds = [];
         // 搜索
         if ($title) {
             $conds[] = ['hospital.title', 'LIKE', '%'.$title.'%'];
@@ -64,13 +63,11 @@ class HospitalService
             ->all();
 
         $doctors = User::query()
-            ->where('user.deletedat', 0)
             ->selectRaw('hospitalid,COUNT(*) AS total')
             ->groupBy('hospitalid')
             ->pluck('total', 'hospitalid')
             ->all();
         $patients = Patient::query()
-            ->where('patient.deletedat', 0)
             ->selectRaw('hospitalid,COUNT(*) AS total')
             ->groupBy('hospitalid')
             ->pluck('total', 'hospitalid')
@@ -94,7 +91,6 @@ class HospitalService
     {
         $duplicate = Hospital::query()
             ->where('title', $hospital['title'])
-            ->where('deletedat', 0)
             ->when($hospital['hospitalid'], fn ($query, $id) => $query->where('id', '!=', $id))
             ->exists();
         if ($duplicate) {
@@ -105,14 +101,15 @@ class HospitalService
             Hospital::query()
                 ->where('hospital.id', $hospital['hospitalid'])
                 ->update([
-                    'title'     => $hospital['title'],
-                    'updatedat' => timenow(),
+                    'title'      => $hospital['title'],
+                    'updated_at' => now(),
                 ]);
         } else {
             $hospital['hospitalid'] = Hospital::query()
                 ->insertGetId([
-                    'title'     => $hospital['title'],
-                    'createdat' => timenow(),
+                    'title'      => $hospital['title'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
         }
 
@@ -134,11 +131,11 @@ class HospitalService
     public function delete(int $hospitalid): void
     {
         // 历史医生仍关联医院，删除检查需保留原先包含已删除医生的语义。
-        $users = User::query()->withoutGlobalScope('active')->where('user.hospitalid', $hospitalid)->exists();
+        $users = User::query()->withTrashed()->where('user.hospitalid', $hospitalid)->exists();
         if ($users) {
             throw new BusinessException('医院有医生存在，不可以删除。');
         }
 
-        Hospital::query()->where('hospital.id', $hospitalid)->update(['deletedat' => timenow()]);
+        Hospital::query()->where('hospital.id', $hospitalid)->delete();
     }
 }

@@ -79,7 +79,7 @@ class MigrationTest extends TestCase
     public function test_deleted_account_and_wrong_password_cannot_login(): void
     {
         $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'wrong', 'captcha' => $this->issueLoginCaptcha()])->assertStatus(401)->assertJsonMissingPath('data.password');
-        DB::table('user')->where('id', 1)->update(['deletedat' => time()]);
+        DB::table('user')->where('id', 1)->update(['deleted_at' => now()]);
         $this->postJson('/signin/dologin', ['mobile' => '13800000001', 'password' => 'test-password', 'captcha' => $this->issueLoginCaptcha()])->assertStatus(401);
     }
 
@@ -110,12 +110,12 @@ class MigrationTest extends TestCase
     public function test_native_queries_preserve_pagination_counts_joins_and_rollback(): void
     {
         $this->signIn();
-        config(['options.perpage.value' => 1]);
+        config(['remeo.options.perpage.value' => 1]);
         $this->insertPatients([
             ['id' => 11, 'realname' => '患者甲', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1],
             ['id' => 22, 'realname' => '患者乙', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1],
             ['id' => 33, 'realname' => '患者丙', 'hospitalid' => 2, 'doctorid' => 1, 'isout' => 1],
-            ['id' => 44, 'realname' => '患者丁', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1, 'deletedat' => 1],
+            ['id' => 44, 'realname' => '患者丁', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1, 'deleted_at' => '2026-01-01 12:12:12'],
         ]);
         DB::table('progress')->insert(['patientid' => 22, 'firstsituation' => 1]);
         $this->getJson('/outpatient/items?realname='.urlencode('患者'))
@@ -146,7 +146,7 @@ class MigrationTest extends TestCase
         $this->assertSame([1], array_keys($users->getUsersByUserids([1, 999])));
         $this->assertSame([1], array_keys($users->getUsersByUserids(1)));
         $this->assertNull($users->getUserByMobile('missing'));
-        DB::table('user')->insert(['id' => 2, 'mobile' => '13800000999', 'deletedat' => 1]);
+        DB::table('user')->insert(['id' => 2, 'mobile' => '13800000999', 'deleted_at' => '2026-01-01 12:12:12']);
         $this->assertNull($users->getUserByMobile('13800000999'));
 
         $logs = app(LogRepository::class);
@@ -225,9 +225,9 @@ class MigrationTest extends TestCase
         config(['remeo.super_users' => []]);
         $this->signIn();
         $this->insertPatients([
-            ['id' => 1, 'realname' => '本院患者', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1, 'deletedat' => 0],
-            ['id' => 2, 'realname' => '他院患者', 'hospitalid' => 2, 'doctorid' => 1, 'isout' => 1, 'deletedat' => 0],
-            ['id' => 3, 'realname' => '已删除', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1, 'deletedat' => 1],
+            ['id' => 1, 'realname' => '本院患者', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1],
+            ['id' => 2, 'realname' => '他院患者', 'hospitalid' => 2, 'doctorid' => 1, 'isout' => 1],
+            ['id' => 3, 'realname' => '已删除', 'hospitalid' => 1, 'doctorid' => 1, 'isout' => 1, 'deleted_at' => '2026-01-01 12:12:12'],
         ]);
         $this->getJson('/outpatient/items?hospitalid=-1')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.items.0.realname', '本院患者');
         $this->getJson('/outpatient/getpatient?patientid=2')->assertStatus(404);
@@ -353,6 +353,9 @@ class MigrationTest extends TestCase
         $this->getJson('/inhospital/items')->assertOk()->assertJsonPath('data.total', 1);
         $this->getJson('/inhospital/homepage?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
         $this->getJson('/inhospital/homepagedaylist?patientid='.$id)->assertOk()->assertJsonPath('code', 0);
+        $this->getJson('/inhospital/homepage?patientid='.$id.'&hospseq=999')->assertStatus(418)->assertJsonPath('code', 1);
+        DB::table('radiotherapy')->where('patientid', $id)->delete();
+        $this->getJson('/inhospital/followuppage?patientid='.$id)->assertOk()->assertJsonPath('data.radiotherapy', []);
     }
 
     public function test_another_patients_treatment_cannot_be_read(): void
@@ -391,7 +394,8 @@ class MigrationTest extends TestCase
         $this->postJson('/doctor/resetpassword', ['doctorid' => $doctor])->assertOk();
         $this->deleteJson('/hospital/delete', ['hospitalid' => $hospital])->assertStatus(418);
         $this->deleteJson('/doctor/delete', ['doctorid' => $doctor])->assertOk();
-        $this->assertNotNull(DB::table('user')->where('id', $doctor)->where('deletedat', '>', 0)->first());
+        $this->assertNotNull(DB::table('user')->where('id', $doctor)->whereNotNull('deleted_at')->first());
+        $this->deleteJson('/hospital/delete', ['hospitalid' => $hospital])->assertStatus(418);
         $emptyHospital = $this->postJson('/hospital/update', ['title' => '待删除测试医院'])->assertOk()->json('data.hospitalid');
         $this->deleteJson('/hospital/delete', ['hospitalid' => $emptyHospital])->assertOk();
         $this->getJson('/hospital/items?'.http_build_query(['title' => '待删除测试医院']))->assertJsonPath('data.total', 0);
@@ -464,10 +468,10 @@ class MigrationTest extends TestCase
     {
         $this->signIn();
         $this->insertPatients([
-            ['id' => 1, 'hospitalid' => 1, 'isout' => 1, 'deletedat' => 0],
-            ['id' => 2, 'hospitalid' => 1, 'isout' => 0, 'deletedat' => 0],
-            ['id' => 3, 'hospitalid' => 2, 'isout' => 1, 'deletedat' => 0],
-            ['id' => 4, 'hospitalid' => 1, 'isout' => 1, 'deletedat' => 1],
+            ['id' => 1, 'hospitalid' => 1, 'isout' => 1],
+            ['id' => 2, 'hospitalid' => 1, 'isout' => 0],
+            ['id' => 3, 'hospitalid' => 2, 'isout' => 1],
+            ['id' => 4, 'hospitalid' => 1, 'isout' => 1, 'deleted_at' => '2026-01-01 12:12:12'],
         ]);
         DB::table('category')->insert([
             ['id' => 100, 'parentid' => 0, 'title' => 'testcategory'],
